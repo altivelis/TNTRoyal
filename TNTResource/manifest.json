@@ -1,0 +1,23 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "TNTRoyalResource",
+    "description": "TNTRoyalのリソースパック",
+    "version": [1, 0, 0],
+    "min_engine_version": [1, 21, 50],
+    "uuid": "40f9cea2-d2ca-4004-90a0-3bcfe58b8636"
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "description": "リソースモジュール",
+      "version": [1, 0, 0],
+      "uuid": "3ccf959e-fae0-4e75-846a-9980dc441c3d"
+    }
+  ],
+  "metadata": {
+    "authors": ["altivelis"],
+    "url": "https://twitter.com/altivelis1026?s=20&t=cXOW73Tvug2xUX4xijCrCw",
+    "license": "名前さえ記述してくれれば改造、改変OK"
+  }
+}
