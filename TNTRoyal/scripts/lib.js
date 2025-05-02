@@ -60,6 +60,10 @@ export function explode_particle(dimension, location){
  */
 export function explode_block(dimension, location){
   let block = dimension.getBlock(location);
+  if(block.typeId == "minecraft:air") {
+    explode_particle(dimension, location);
+    return;
+  }
   if(breakable_block.includes(block.typeId)){
     dimension.setBlockType(location, "minecraft:air");
     explode_particle(dimension, location);
@@ -70,8 +74,11 @@ export function explode_block(dimension, location){
         case 1: tag = "power"; break;
         case 2: tag = "speed"; break;
       }
-      let entity = dimension.spawnEntity("altivelis:marker", {...location, y: location.y+0.5});
-      entity.addTag(tag);
+      myTimeout(10, ()=>{
+        let entity = dimension.spawnEntity("altivelis:marker", {...location, y: location.y+0.5});
+        entity.addTag(tag);
+        entity.dimension.playSound("random.pop", location, {volume: 10});
+      })
     }
   }
 }

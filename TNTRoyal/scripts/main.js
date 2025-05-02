@@ -1,5 +1,5 @@
 import * as mc from "@minecraft/server";
-import { getCenter, explode_block, explode_particle, clearField, myTimeout } from "./lib.js";
+import { getCenter, explode_block, explode_particle, clearField, myTimeout, setField } from "./lib.js";
 import "./menu.js";
 
 export const roby = {x:0.5, y:-58.5, z:0.5};
@@ -128,13 +128,92 @@ mc.system.runInterval(()=>{
   })
 })
 
+//ゲーム開始処理
+export function startGame(){
+  if(mc.world.getDynamicProperty("status") != 0) return;
+  // ゲームを開始する
+  let member = mc.world.getPlayers();
+  let tpmember = member.concat();
+  if(tpmember.length > 4) return;
+  tpmember.length = 4;
+  //ランダムに並び替え
+  for (let i = tpmember.length - 1; i >= 0; i--) {
+    let rand = Math.floor(Math.random() * (i + 1));
+    // 配列の要素の順番を入れ替える
+    let tmpStorage = tpmember[i];
+    tpmember[i] = tpmember[rand];
+    tpmember[rand] = tmpStorage;
+  }
+  let index = mc.world.getDynamicProperty("stage");
+  setField(mc.world.getDimension("overworld"), stage[index].start, stage[index].end, stage[index].block);
+  mc.world.sendMessage(`ゲームを開始します`);
+  mc.world.sendMessage(`ステージ: ${stage[index].name}`);
+  mc.world.getPlayers().forEach(player=>{
+    player.camera.fade({fadeColor: {red:0, green:0, blue:0}, fadeTime:{fadeInTime: 1, fadeOutTime: 1, holdTime: 0}});
+    player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
+  })
+  myTimeout(20, ()=>{
+    //プレイヤーをテレポート
+    if(tpmember[0] != undefined) tpmember[0].teleport({x: stage[index].start.x+0.5, y: stage[index].start.y, z: stage[index].start.z+0.5}, {rotation:{x:0, y:0}});
+    if(tpmember[1] != undefined) tpmember[1].teleport({x: stage[index].end.x+0.5, y: stage[index].start.y, z: stage[index].start.z+0.5}, {rotation:{x:0, y:0}});
+    if(tpmember[2] != undefined) tpmember[2].teleport({x: stage[index].start.x+0.5, y: stage[index].start.y, z: stage[index].end.z+0.5}, {rotation:{x:0, y:0}});
+    if(tpmember[3] != undefined) tpmember[3].teleport({x: stage[index].end.x+0.5, y: stage[index].start.y, z: stage[index].end.z+0.5}, {rotation:{x:0, y:0}});
+    //プレイヤー初期化
+    member.forEach(player=>{
+      player.addTag("player");
+      mc.world.scoreboard.getObjective("bomb").setScore(player, 1);
+      mc.world.scoreboard.getObjective("power").setScore(player, 2);
+      mc.world.scoreboard.getObjective("speed").setScore(player, 0);
+      player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, false);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, false);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, false);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
+      let center = getCenter(stage[index].start, stage[index].end);
+      player.camera.setCamera("minecraft:free", {location: {...center, y:center.y+12, z:center.z-3}, facingLocation: center});
+    })
+    mc.world.setDynamicProperty("status", 1);
+    myTimeout(20, ()=>{
+      myTimeout(20, ()=>{
+        mc.world.getPlayers().forEach(player=>{
+          player.onScreenDisplay.setTitle("§l§a3", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
+          player.playSound("random.wood_click", {location: player.location, volume: 10});
+        })
+        myTimeout(20, ()=>{
+          mc.world.getPlayers().forEach(player=>{
+            player.onScreenDisplay.setTitle("§l§a2", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
+            player.playSound("random.wood_click", {location: player.location, volume: 10});
+          })
+          myTimeout(20, ()=>{
+            mc.world.getPlayers().forEach(player=>{
+              player.onScreenDisplay.setTitle("§l§a1", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
+              player.playSound("random.wood_click", {location: player.location, volume: 10});
+            })
+            myTimeout(20, ()=>{
+              mc.world.setDynamicProperty("status", 2);
+              mc.world.getPlayers().forEach(player=>{
+                player.onScreenDisplay.setTitle("§l§bGO!", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
+                player.playSound("mob.wither.spawn", {location: player.location, volume: 10});
+              })
+              member.forEach(player=>{
+                player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, true);
+              })
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
 //終了処理
 function endGame(){
   mc.world.setDynamicProperty("status", 3);
   let member = mc.world.getPlayers({tags:["player"]});
   let winner = member.filter(player=>{return player.hasTag("dead") == false})[0];
-  winner.teleport(winner.location, {facingLocation: {...winner.location, y: winner.location.y+5, z: winner.location.z-2}});
   if(winner != undefined) {
+    winner.teleport(winner.location, {facingLocation: {...winner.location, y: winner.location.y+5, z: winner.location.z-2}});
+    winner.dimension.playSound("random.totem", {location: winner.location, volume: 10});
     mc.world.sendMessage(`${winner.nameTag}の勝利!`);
     mc.world.getPlayers().forEach(player=>{
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
@@ -154,10 +233,12 @@ function endGame(){
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
       player.camera.clear();
       player.teleport(roby);
+      player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Reset, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
     })
     mc.world.getDimension("overworld").getEntities({type: "altivelis:marker"}).forEach(entity=>{
       entity.remove();
     })
+    clearField(mc.world.getDimension("overworld"), stage[mc.world.getDynamicProperty("stage")].start, stage[mc.world.getDynamicProperty("stage")].end);
     mc.world.setDynamicProperty("status", 0);
   })
 }
@@ -179,7 +260,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     explode_particle(data.dimension, pos);
     for(let i=1; i<=power; i++){
       if(through_block.includes(data.dimension.getBlock({...pos, x: pos.x+i}).typeId) &&
-      data.dimension.getEntities({excludeTypes:["minecraft:player"], location: {x:Math.floor(pos.x), y:Math.floor(pos.y), z:Math.floor(pos.z)}, volume:{x:1, y:1, z:1}}).length == 0){
+      data.dimension.getEntities({excludeTypes:["minecraft:player"], location: {x:Math.floor(pos.x), y:Math.floor(pos.y), z:Math.floor(pos.z)}, volume:{x:0, y:0, z:0}}).length == 0){
         explode_particle(data.dimension, {...pos, x: pos.x+i});
       }
       else{
@@ -190,7 +271,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     // x-
     for(let i=1; i<=power; i++){
       if(through_block.includes(data.dimension.getBlock({...pos, x: pos.x-i}).typeId) &&
-      data.dimension.getEntities({excludeTypes:["minecraft:player"], location: {x:Math.floor(pos.x), y:Math.floor(pos.y), z:Math.floor(pos.z)}, volume:{x:1, y:1, z:1}}).length == 0){
+      data.dimension.getEntities({excludeTypes:["minecraft:player"], location: {x:Math.floor(pos.x), y:Math.floor(pos.y), z:Math.floor(pos.z)}, volume:{x:0, y:0, z:0}}).length == 0){
         explode_particle(data.dimension, {...pos, x: pos.x-i});
       }
       else{
@@ -201,7 +282,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     // z+
     for(let i=1; i<=power; i++){
       if(through_block.includes(data.dimension.getBlock({...pos, z: pos.z+i}).typeId) &&
-      data.dimension.getEntities({excludeTypes:["minecraft:player"], location: {x:Math.floor(pos.x), y:Math.floor(pos.y), z:Math.floor(pos.z)}, volume:{x:1, y:1, z:1}}).length == 0){
+      data.dimension.getEntities({excludeTypes:["minecraft:player"], location: {x:Math.floor(pos.x), y:Math.floor(pos.y), z:Math.floor(pos.z)}, volume:{x:0, y:0, z:0}}).length == 0){
         explode_particle(data.dimension, {...pos, z: pos.z+i});
       }
       else{
@@ -212,7 +293,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     // z-
     for(let i=1; i<=power; i++){
       if(through_block.includes(data.dimension.getBlock({...pos, z: pos.z-i}).typeId) &&
-      data.dimension.getEntities({excludeTypes:["minecraft:player"], location: {x:Math.floor(pos.x), y:Math.floor(pos.y), z:Math.floor(pos.z)}, volume:{x:1, y:1, z:1}}).length == 0){
+      data.dimension.getEntities({excludeTypes:["minecraft:player"], location: {x:Math.floor(pos.x), y:Math.floor(pos.y), z:Math.floor(pos.z)}, volume:{x:0, y:0, z:0}}).length == 0){
         explode_particle(data.dimension, {...pos, z: pos.z-i});
       }
       else{
@@ -223,7 +304,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     // y-
     for(let i=1; i<=power; i++){
       if(through_block.includes(data.dimension.getBlock({...pos, y: pos.y-i}).typeId) &&
-      data.dimension.getEntities({excludeTypes:["minecraft:player"], location: {x:Math.floor(pos.x), y:Math.floor(pos.y), z:Math.floor(pos.z)}, volume:{x:1, y:1, z:1}}).length == 0){
+      data.dimension.getEntities({excludeTypes:["minecraft:player"], location: {x:Math.floor(pos.x), y:Math.floor(pos.y), z:Math.floor(pos.z)}, volume:{x:0, y:0, z:0}}).length == 0){
         explode_particle(data.dimension, {...pos, y: pos.y-i});
       }
       else{
@@ -234,8 +315,10 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
   })
 })
 
+//テスト用tnt設置処理
 mc.world.afterEvents.itemUse.subscribe(data=>{
   let {source, itemStack} = data;
+  if(data.source.getGameMode() != mc.GameMode.adventure) return;
   if(itemStack.typeId != "minecraft:tnt") return;
   if(source.getDynamicProperty("bomb") != undefined && source.getDynamicProperty("bomb") >= mc.world.scoreboard.getObjective("bomb").getScore(source)) return;
   if(source.dimension.getEntities({location: source.location, maxDistance:0.5, type:"minecraft:tnt"}).length > 0) return;
@@ -249,9 +332,11 @@ mc.world.afterEvents.itemUse.subscribe(data=>{
   else source.setDynamicProperty("bomb", source.getDynamicProperty("bomb")+1);
 })
 
+//ボタン入力処理
 mc.world.afterEvents.playerButtonInput.subscribe(data=>{
   if(mc.world.getDynamicProperty("status") != 2) return;
   let player = data.player;
+  if(player.hasTag("dead")) return;
   if(player.getDynamicProperty("bomb") != undefined && player.getDynamicProperty("bomb") >= mc.world.scoreboard.getObjective("bomb").getScore(player)) return;
   if(player.dimension.getEntities({location: player.location, maxDistance:0.5, type:"minecraft:tnt"}).length > 0) return;
   let pos = player.location;
@@ -259,6 +344,7 @@ mc.world.afterEvents.playerButtonInput.subscribe(data=>{
   tnt.setDynamicProperty("pos", {x: Math.floor(pos.x)+0.5, y: Math.floor(pos.y), z: Math.floor(pos.z)+0.5});
   tnt.owner = player;
   tnt.setDynamicProperty("power", mc.world.scoreboard.getObjective("power").getScore(player));
+  tnt.dimension.playSound("fire.ignite", {location: tnt.location, volume: 10});
   if(player.getDynamicProperty("bomb") == undefined) player.setDynamicProperty("bomb", 1);
   else player.setDynamicProperty("bomb", player.getDynamicProperty("bomb")+1);
 }, {buttons: [mc.InputButton.Jump], state: mc.ButtonState.Pressed})
