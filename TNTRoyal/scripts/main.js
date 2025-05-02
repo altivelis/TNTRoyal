@@ -1,6 +1,7 @@
 import * as mc from "@minecraft/server";
 import { getCenter, explode_block, explode_particle, clearField, myTimeout, setField } from "./lib.js";
 import "./menu.js";
+import "./button.js";
 
 export const roby = {x:0.5, y:-58.5, z:0.5};
 export const stage = [
@@ -12,15 +13,17 @@ export const stage = [
   }
 ]
 
+//破壊可能ブロックリスト
 export const breakable_block = [
   "minecraft:brick_block",
 ]
 
+//爆風が貫通するブロックリスト
 export const through_block = [
   "minecraft:air",
 ]
 
-
+//テスト用コマンド
 mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
   if(data.id == "tnt:init"){
     mc.world.setDynamicProperty("stage", 0);
@@ -132,9 +135,12 @@ mc.system.runInterval(()=>{
 export function startGame(){
   if(mc.world.getDynamicProperty("status") != 0) return;
   // ゲームを開始する
-  let member = mc.world.getPlayers();
+  let member = mc.world.getPlayers({excludeTags:["spectator"]});
   let tpmember = member.concat();
-  if(tpmember.length > 4) return;
+  if(tpmember.length > 4) {
+    mc.world.sendMessage(`§cプレイヤーが多すぎます。最大4人まで参加できます。`);
+    return;
+  }
   tpmember.length = 4;
   //ランダムに並び替え
   for (let i = tpmember.length - 1; i >= 0; i--) {
@@ -146,11 +152,11 @@ export function startGame(){
   }
   let index = mc.world.getDynamicProperty("stage");
   setField(mc.world.getDimension("overworld"), stage[index].start, stage[index].end, stage[index].block);
+  mc.world.setDynamicProperty("status", 1);
   mc.world.sendMessage(`ゲームを開始します`);
   mc.world.sendMessage(`ステージ: ${stage[index].name}`);
   mc.world.getPlayers().forEach(player=>{
     player.camera.fade({fadeColor: {red:0, green:0, blue:0}, fadeTime:{fadeInTime: 1, fadeOutTime: 1, holdTime: 0}});
-    player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
   })
   myTimeout(20, ()=>{
     //プレイヤーをテレポート
@@ -165,14 +171,17 @@ export function startGame(){
       mc.world.scoreboard.getObjective("power").setScore(player, 2);
       mc.world.scoreboard.getObjective("speed").setScore(player, 0);
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
+    })
+    mc.world.getPlayers().forEach(player=>{
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, false);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, false);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, false);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
       let center = getCenter(stage[index].start, stage[index].end);
       player.camera.setCamera("minecraft:free", {location: {...center, y:center.y+12, z:center.z-3}, facingLocation: center});
+      player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
     })
-    mc.world.setDynamicProperty("status", 1);
+
     myTimeout(20, ()=>{
       myTimeout(20, ()=>{
         mc.world.getPlayers().forEach(player=>{
@@ -213,7 +222,7 @@ function endGame(){
   let winner = member.filter(player=>{return player.hasTag("dead") == false})[0];
   if(winner != undefined) {
     winner.teleport(winner.location, {facingLocation: {...winner.location, y: winner.location.y+5, z: winner.location.z-2}});
-    winner.dimension.playSound("random.totem", {location: winner.location, volume: 10});
+    winner.dimension.playSound("random.totem", winner.location, {volume: 10});
     mc.world.sendMessage(`${winner.nameTag}の勝利!`);
     mc.world.getPlayers().forEach(player=>{
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
@@ -223,7 +232,7 @@ function endGame(){
     })
   }
   myTimeout(40, ()=>{
-    member.forEach(player=>{
+    mc.world.getPlayers().forEach(player=>{
       player.removeTag("player");
       player.removeTag("dead");
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, true);
@@ -232,7 +241,7 @@ function endGame(){
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, true);
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
       player.camera.clear();
-      player.teleport(roby);
+      player.teleport(roby, {rotation: {x:0, y:0}});
       player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Reset, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
     })
     mc.world.getDimension("overworld").getEntities({type: "altivelis:marker"}).forEach(entity=>{
@@ -344,27 +353,25 @@ mc.world.afterEvents.playerButtonInput.subscribe(data=>{
   tnt.setDynamicProperty("pos", {x: Math.floor(pos.x)+0.5, y: Math.floor(pos.y), z: Math.floor(pos.z)+0.5});
   tnt.owner = player;
   tnt.setDynamicProperty("power", mc.world.scoreboard.getObjective("power").getScore(player));
-  tnt.dimension.playSound("fire.ignite", {location: tnt.location, volume: 10});
+  tnt.dimension.playSound("fire.ignite", tnt.location, {volume: 10});
   if(player.getDynamicProperty("bomb") == undefined) player.setDynamicProperty("bomb", 1);
   else player.setDynamicProperty("bomb", player.getDynamicProperty("bomb")+1);
 }, {buttons: [mc.InputButton.Jump], state: mc.ButtonState.Pressed})
 
-mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
-  if(data.id == "tnt:village_init"){
-    let index = mc.world.getDynamicProperty("stage");
-    let dimension = mc.world.getDimension("overworld");
-    clearField(dimension, stage[index].start, stage[index].end);
-    for(let x=stage[index].start.x; x<=stage[index].end.x; x++){
-      for(let z=stage[index].start.z; z<=stage[index].end.z; z++){
-        if((Math.min(stage[index].start.x, stage[index].end.x)+1 >= x || Math.max(stage[index].start.x, stage[index].end.x)-1 <= x )
-          && (Math.min(stage[index].start.z, stage[index].end.z)+1 >= z || Math.max(stage[index].start.z, stage[index].end.z)-1 <= z)
-        ) continue;
-        if(dimension.getBlock({x:x, y:stage[index].start.y, z:z}).typeId == "minecraft:air"){
-          if(Math.random() < 0.9){
-            dimension.setBlockType({x:x, y:stage[index].start.y, z:z}, "minecraft:brick_block");
-          }
-        }
-      }
-    }
+//ワールド参加時処理
+mc.world.afterEvents.playerSpawn.subscribe(data=>{
+  if(!data.initialSpawn) return;
+  if(data.player.hasTag("player")) data.player.removeTag("player");
+  if(data.player.hasTag("dead")) data.player.removeTag("dead");
+  data.player.setDynamicProperty("bomb", 0);
+  data.player.teleport(roby, {rotation: {x:0, y:0}});
+  if(mc.world.getDynamicProperty("status") > 0) {
+    data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, false);
+    data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, false);
+    data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, false);
+    data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
+    let center = getCenter(stage[index].start, stage[index].end);
+    data.player.camera.setCamera("minecraft:free", {location: {...center, y:center.y+12, z:center.z-3}, facingLocation: center});
+    data.player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
   }
 })

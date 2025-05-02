@@ -47,6 +47,7 @@ export function explode_particle(dimension, location){
     }
     if(entity instanceof mc.Player){
       entity.addTag("dead");
+      entity.dimension.playSound("item.trident.thunder", entity.location, {volume: 10});
       entity.teleport(roby);
       entity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
       mc.world.sendMessage(`§c${entity.nameTag}§rは爆発に巻き込まれた！`);
