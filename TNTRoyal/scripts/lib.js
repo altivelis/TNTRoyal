@@ -126,3 +126,15 @@ export function setField(dimension, start, end, blockType) {
     }
   }
 }
+
+/**
+ * 座標比較関数
+ * @param {mc.Vector3} location1 
+ * @param {mc.Vector3} location2 
+ * @returns {boolean}
+ */
+export function compLocation(location1, location2) {
+  return Math.floor(location1.x) == Math.floor(location2.x) &&
+         Math.floor(location1.y) == Math.floor(location2.y) &&
+         Math.floor(location1.z) == Math.floor(location2.z);
+}
