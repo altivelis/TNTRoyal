@@ -1,0 +1,16 @@
+{
+  "format_version": "1.8.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "altivelis:pressure_block",
+      "materials": { "default": "entity_alphatest" },
+      "textures": {
+        "default": "textures/altivelis/custom_anvil_texture"
+      },
+      "geometry": {
+        "default": "geometry.pressure_block"
+      },
+      "render_controllers": [ "controller.render.default" ]
+    }
+  }
+}
