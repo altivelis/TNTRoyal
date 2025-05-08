@@ -1,9 +1,10 @@
 import * as mc from "@minecraft/server";
 import { startGame } from "./main";
+import { openRoleSelect, openStageSelect } from "./menu";
 
 mc.world.beforeEvents.playerInteractWithBlock.subscribe(data=>{
   let {isFirstEvent, block, player} = data;
-  if(!data.isFirstEvent) return;
+  if(!isFirstEvent) return;
   if(`${block.location.x} ${block.location.y} ${block.location.z}` == "-1 -58 8") {
     //スタートボタン
     data.cancel = true;
@@ -23,6 +24,20 @@ mc.world.beforeEvents.playerInteractWithBlock.subscribe(data=>{
         player.addTag("spectator");
         player.sendMessage("§a観戦モードになりました。");
       }
+    })
+  }
+  if(`${block.location.x} ${block.location.y} ${block.location.z}` == "-5 -58 8") {
+    //ステージ選択ボタン
+    data.cancel = true;
+    mc.system.run(()=>{
+      openStageSelect(player);
+    })
+  }
+  if(`${block.location.x} ${block.location.y} ${block.location.z}` == "3 -58 8") {
+    //能力選択ボタン
+    data.cancel = true;
+    mc.system.run(()=>{
+      openRoleSelect(player);
     })
   }
 })
