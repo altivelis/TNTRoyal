@@ -1,5 +1,6 @@
 import * as mc from "@minecraft/server";
-import { breakable_block, roby } from "./main.js";
+import { breakable_block, roby, stage, through_block } from "./const.js";
+import { roleList } from "./role.js";
 
 /**
  * Timeoutを見やすくする関数
@@ -11,17 +12,58 @@ export function myTimeout(tick, func){
 }
 
 /**
+ * スコアボード取得関数
+ * @param {mc.Entity | mc.ScoreboardIdentity | string} target 
+ * @param {string} objective 
+ * @returns {number | undefined}
+ */
+export function getScore(target, objective) {
+  return mc.world.scoreboard.getObjective(objective).getScore(target);
+}
+
+/**
+ * スコアボードセット関数
+ * @param {mc.Entity | mc.ScoreboardIdentity | string} target
+ * @param {string} objective
+ * @param {number} score
+ * @returns {void}
+ */
+export function setScore(target, objective, score) {
+  mc.world.scoreboard.getObjective(objective).setScore(target, score);
+}
+
+/**
+ * スコアボード加算関数
+ * @param {mc.Entity | mc.ScoreboardIdentity | string} target
+ * @param {string} objective
+ * @param {number} score
+ * @returns {number}
+ */
+export function addScore(target, objective, score) {
+  return mc.world.scoreboard.getObjective(objective).addScore(target, score);
+}
+
+/**
  * 
- * @param {mc.Vector3} pos1 
- * @param {mc.Vector3} pos2 
+ * @param {{start:mc.Vector3, end:mc.Vector3}[]} area
  * @returns {mc.Vector3}
  */
-export function getCenter(pos1, pos2) {
-  return {
-    x: (pos1.x + pos2.x) / 2 + 0.5,
-    y: (pos1.y + pos2.y) / 2,
-    z: (pos1.z + pos2.z) / 2 + 0.5
+export function getCenter(area) {
+  let min = area[0].start;
+  let max = area[0].end;
+  for(let i=1; i<area.length; i++){
+    min.x = Math.min(min.x, area[i].start.x);
+    min.y = Math.min(min.y, area[i].start.y);
+    min.z = Math.min(min.z, area[i].start.z);
+    max.x = Math.max(max.x, area[i].end.x);
+    max.y = Math.max(max.y, area[i].end.y);
+    max.z = Math.max(max.z, area[i].end.z);
   }
+  return {
+    x: Math.floor((min.x + max.x) / 2)+0.5,
+    y: Math.floor((min.y + max.y) / 2)+0.5,
+    z: Math.floor((min.z + max.z) / 2)+0.5,
+  };
 }
 
 /**
@@ -31,13 +73,11 @@ export function getCenter(pos1, pos2) {
 export function explode_particle(dimension, location){
   let molang = new mc.MolangVariableMap();
   molang.setColorRGB("color", {red: 1, green: 0.5, blue: 0});
-  dimension.spawnParticle("tntr:explosion", location, molang);
+  dimension.spawnParticle("tntr:explosion", {x:Math.floor(location.x)+0.5, y:Math.floor(location.y)+0.5, z:Math.floor(location.z)+0.5}, molang);
   dimension.getEntities().filter(e=>{
-    return Math.floor(e.location.x) == Math.floor(location.x) &&
-            Math.floor(e.location.y) == Math.floor(location.y) &&
-            Math.floor(e.location.z) == Math.floor(location.z);
+    return compLocation(e.location, location);
   }).forEach(entity=>{
-    if(entity.typeId == "minecraft:tnt"){
+    if(entity.typeId == "altivelis:tnt"){
       entity.triggerEvent("from_explosion");
       return;
     }
@@ -45,12 +85,13 @@ export function explode_particle(dimension, location){
       entity.remove();
       return;
     }
-    if(entity instanceof mc.Player){
+    if(entity instanceof mc.Player && mc.world.getDynamicProperty("status") == 2){
       entity.addTag("dead");
       entity.dimension.playSound("item.trident.thunder", entity.location, {volume: 10});
       entity.teleport(roby);
       entity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
       mc.world.sendMessage(`§c${entity.nameTag}§rは爆発に巻き込まれた！`);
+      dropItem(entity);
     }
   })
 }
@@ -70,11 +111,23 @@ export function explode_block(dimension, location){
     explode_particle(dimension, location);
     if(Math.random() < 0.5) {
       let tag = "";
-      switch(Math.floor(Math.random()*3)){
-        case 0: tag = "bomb"; break;
-        case 1: tag = "power"; break;
-        case 2: tag = "speed"; break;
+      let probabilities = [
+        {tag: "bomb", probability: 8},
+        {tag: "power", probability: 8},
+        {tag: "speed", probability: 8},
+        {tag: "blue_tnt", probability: 1},
+      ]
+      let total = probabilities.reduce((sum, item) => sum + item.probability, 0);
+      let random = Math.floor(Math.random() * total);
+      let sum = 0;
+      for(let i=0; i<probabilities.length; i++){
+        sum += probabilities[i].probability;
+        if(random < sum){
+          tag = probabilities[i].tag;
+          break;
+        }
       }
+      if(tag == "") return;
       myTimeout(10, ()=>{
         let entity = dimension.spawnEntity("altivelis:marker", {...location, y: location.y+0.5});
         entity.addTag(tag);
@@ -110,14 +163,13 @@ export function clearField(dimension, start, end) {
  * @param {mc.Vector3} start 
  * @param {mc.Vector3} end 
  * @param {string} blockType 
+ * @param {mc.Vector3[]} spawn
  */
-export function setField(dimension, start, end, blockType) {
+export function setField(dimension, start, end, blockType, spawn) {
   clearField(dimension, start, end);
   for(let x=start.x; x<=end.x; x++){
     for(let z=start.z; z<=end.z; z++){
-      if((Math.min(start.x, end.x)+1 >= x || Math.max(start.x, end.x)-1 <= x )
-        && (Math.min(start.z, end.z)+1 >= z || Math.max(start.z, end.z)-1 <= z)
-      ) continue;
+      if(spawn.find(e=>{return Math.sqrt((e.x-x)**2 + (e.z-z)**2)<2}) != undefined) continue;
       if(dimension.getBlock({x:x, y:start.y, z:z}).typeId == "minecraft:air"){
         if(Math.random() < 0.9){
           dimension.setBlockType({x:x, y:start.y, z:z}, blockType);
@@ -137,4 +189,142 @@ export function compLocation(location1, location2) {
   return Math.floor(location1.x) == Math.floor(location2.x) &&
          Math.floor(location1.y) == Math.floor(location2.y) &&
          Math.floor(location1.z) == Math.floor(location2.z);
+}
+
+/**
+ * 死亡時アイテムドロップ関数
+ * @param {mc.Player} player
+ */
+export function dropItem(player) {
+  let stageIndex = mc.world.getDynamicProperty("stage");
+  let bomb = getScore(player, "bomb") - roleList[player.getDynamicProperty("role")].initBomb;
+  let power = getScore(player, "power") - roleList[player.getDynamicProperty("role")].initPower;
+  let speed = getScore(player, "speed") - roleList[player.getDynamicProperty("role")].initSpeed;
+  let areas = Array.from(new mc.BlockVolume(stage[stageIndex].area[0].start, stage[stageIndex].area[0].end).getBlockLocationIterator());
+  if(stage[stageIndex].area.length > 1) {
+    for(let i=1; i<stage[index].area.length; i++){
+      areas.push(...Array.from(new mc.BlockVolume(stage[stageIndex].area[i].start, stage[stageIndex].area[i].end).getBlockLocationIterator()));
+    }
+  }
+  let dimension = mc.world.getDimension("overworld");
+  let entities = dimension.getEntities({excludeTypes: ["minecraft:player"]});
+  areas.forEach((pos, index, array)=>{
+    let block = dimension.getBlock(pos);
+    if(
+      (!breakable_block.includes(block.typeId) && !through_block.includes(block.typeId)) ||
+      entities.find(e=>{return compLocation(e.location, pos)}) != undefined
+    ) {
+      array.splice(index, 1);
+    }
+  })
+  for(let i=0; i<bomb; i++){
+    if(areas.length == 0) return;
+    let random = Math.floor(Math.random()*areas.length);
+    let pos = areas[random];
+    if(through_block.includes(dimension.getBlock(pos).typeId)){
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+0.5, z:pos.z+0.5});
+      entity.addTag("bomb");
+      areas.splice(random, 1);
+    }else{
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1.5, z:pos.z+0.5});
+      entity.addTag("bomb");
+      areas.splice(random, 1);
+    }
+  }
+  for(let i=0; i<power; i++){
+    if(areas.length == 0) return;
+    let random = Math.floor(Math.random()*areas.length);
+    let pos = areas[random];
+    if(through_block.includes(dimension.getBlock(pos).typeId)){
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+0.5, z:pos.z+0.5});
+      entity.addTag("power");
+      areas.splice(random, 1);
+    }else{
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1.5, z:pos.z+0.5});
+      entity.addTag("power");
+      areas.splice(random, 1);
+    }
+  }
+  for(let i=0; i<speed; i++){
+    if(areas.length == 0) return;
+    let random = Math.floor(Math.random()*areas.length);
+    let pos = areas[random];
+    if(through_block.includes(dimension.getBlock(pos).typeId)){
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+0.5, z:pos.z+0.5});
+      entity.addTag("speed");
+      areas.splice(random, 1);
+    }else{
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1.5, z:pos.z+0.5});
+      entity.addTag("speed");
+      areas.splice(random, 1);
+    }
+  }
+  if(player.getDynamicProperty("tnt") == 1) {
+    if(areas.length == 0) return;
+    let random = Math.floor(Math.random()*areas.length);
+    let pos = areas[random];
+    if(through_block.includes(dimension.getBlock(pos).typeId)){
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+0.5, z:pos.z+0.5});
+      entity.addTag("blue_tnt");
+      areas.splice(random, 1);
+    }else{
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1.5, z:pos.z+0.5});
+      entity.addTag("blue_tnt");
+      areas.splice(random, 1);
+    }
+  }
+}
+
+/**
+ * 螺旋状に座標を取得する関数
+ * @param {mc.Vector3} maxPoint 
+ * @param {mc.Vector3} minPoint 
+ * @returns {mc.Vector3[]}
+ */
+export function spiralOrderCoordinates(maxPoint, minPoint) {
+  // 最大点と最小点の座標を取得
+  const {x:maxX, y:maxY, z:maxZ} = maxPoint;
+  const {x:minX, y:minY, z:minZ} = minPoint;
+  const Y = Math.max(maxY, minY); // y座標は最大値を使用
+
+  // 結果を格納する配列
+  /**
+   * @type {mc.Vector3[]}
+   */
+  const result = [];
+
+  // スパイラルの境界を設定
+  let left = maxX, right = minX, top = maxZ, bottom = minZ;
+
+  while (left >= right && top >= bottom) {
+      // 上辺を左から右へ
+      for (let x = left; x >= right; x--) {
+          result.push({x:x, y:Y, z:top});
+      }
+      top--;
+
+      // 右辺を上から下へ
+      for (let z = top; z >= bottom; z--) {
+          result.push({x:right, y:Y, z:z});
+      }
+      right++;
+
+      // 下辺を右から左へ
+      if (top >= bottom) {
+          for (let x = right; x <= left; x++) {
+              result.push({x:x, y:Y, z:bottom});
+          }
+          bottom++;
+      }
+
+      // 左辺を下から上へ
+      if (left >= right) {
+          for (let z = bottom; z <= top; z++) {
+              result.push({x:left, y:Y, z:z});
+          }
+          left--;
+      }
+  }
+
+  return result;
 }
