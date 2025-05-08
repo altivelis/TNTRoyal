@@ -1,0 +1,82 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "altivelis:tnt",
+      "is_spawnable": true,
+      "is_summonable": true
+    },
+    "component_groups": {
+      "from_explosion": {
+        "minecraft:explode": {
+          "fuse_length": 0.1,
+          "fuse_lit": true,
+          "power": 4,
+          "causes_fire": false,
+          "breaks_blocks": false
+        }
+      },
+      "default": {
+        "minecraft:variant": {
+          "value": 0
+        }
+      },
+      "blue": {
+        "minecraft:variant": {
+          "value": 1
+        }
+      }
+    },
+    "components": {
+      "minecraft:collision_box": {
+        "height": 1,
+        "width": 1
+      },
+      "minecraft:type_family": {
+        "family": [ "mob" ]
+      },
+      "minecraft:explode": {
+        "fuse_length": 2.5,
+        "fuse_lit": true,
+        "power": 4,
+        "causes_fire": false,
+        "breaks_blocks": false
+      },
+      "minecraft:physics": {
+        "has_gravity": true
+      },
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:is_collidable": {},
+      "minecraft:knockback_resistance": {
+        "value": 1.0
+      }
+    },
+    
+    "events": {
+      "from_explosion": {
+        "add": {
+          "component_groups": [
+            "from_explosion"
+          ]
+        }
+      },
+      "default": {
+        "add": {
+          "component_groups": [
+            "default"
+          ]
+        }
+      },
+      "blue": {
+        "add": {
+          "component_groups": [
+            "blue"
+          ]
+        }
+      }
+    }
+  }
+}

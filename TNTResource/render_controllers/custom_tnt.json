@@ -1,0 +1,25 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.custom_tnt": {
+      "arrays": {
+        "textures": {
+          "Array.tnt": [
+            "Texture.default",
+            "Texture.blue"
+          ]
+        }
+      },
+      "rebuild_animation_matrices": true,
+      "geometry": "Geometry.default",
+      "materials": [ { "*": "Material.default" } ],
+      "textures": [ "Array.tnt[query.variant]" ],
+      "overlay_color": {
+          "r": "math.mod(math.floor(query.life_time*4),2)==0 ? this : 1.0",
+          "g": "math.mod(math.floor(query.life_time*4),2)==0 ? this : 1.0",
+          "b": "math.mod(math.floor(query.life_time*4),2)==0 ? this : 1.0",
+          "a": "math.mod(math.floor(query.life_time*4),2)==0 ? this : 0.5"
+      }
+    }
+  }
+}
