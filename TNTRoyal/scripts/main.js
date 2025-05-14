@@ -1,5 +1,5 @@
 import * as mc from "@minecraft/server";
-import { getCenter, explode_block, explode_particle, clearField, myTimeout, setField, getScore, setScore, addScore, compLocation, spiralOrderCoordinates, dropItem } from "./lib.js";
+import { getCenter, explode_block, explode_particle, clearField, myTimeout, setField, getScore, setScore, addScore, compLocation, spiralOrderCoordinates, dropItem, tryTeleport } from "./lib.js";
 import "./menu.js";
 import "./button.js";
 import { roleList } from "./role.js";
@@ -86,6 +86,166 @@ mc.system.runInterval(()=>{
     }
     if(player.getDynamicProperty("role") == undefined) {
       player.setDynamicProperty("role", 0);
+    }
+
+    //入力方向検知
+    let size = 0.2
+    let strength = 0.3
+    let moveVector = player.inputInfo.getMovementVector();
+    if((moveVector.x != 0 || moveVector.y != 0) && mc.world.getDynamicProperty("status") == 2) {
+      if(Math.abs(moveVector.x) > Math.abs(moveVector.y)) {
+        if(moveVector.x > 0) {
+          player.setDynamicProperty("direction", 3);
+          if(player.getVelocity().x == 0 && !player.hasTag("tp")) {
+            //player.sendMessage("左に障壁");
+            //player.teleport({...player.location, z: Math.floor(player.location.z)+0.5});
+            if(player.dimension.getBlock({...player.location, x: player.location.x+1}).typeId == "minecraft:air") {
+              player.applyKnockback(0, (player.location.z > Math.floor(player.location.z)+0.5) ? -1 : 1, strength, 0);
+              player.addTag("tp");
+              myTimeout(1, ()=>{
+                player.removeTag("tp");
+              })
+            }else{
+              if(player.location.z > Math.floor(player.location.z) + 1 - size) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1}) && 
+                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z+1})}).length == 0 &&
+                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z+1})}).length == 0
+                ) {
+                  player.applyKnockback(0, 1, strength*2, 0);
+                  player.addTag("tp");
+                  myTimeout(1, ()=>{
+                    player.removeTag("tp");
+                  })
+                }
+              }else if(player.location.z < Math.floor(player.location.z) + size) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1}) &&
+                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z-1})}).length == 0 &&
+                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z-1})}).length == 0
+                ) {
+                  player.applyKnockback(0, -1, strength*2, 0);
+                  player.addTag("tp");
+                  myTimeout(1, ()=>{
+                    player.removeTag("tp");
+                  })
+                }
+              }
+            }
+          }
+        }else{
+          player.setDynamicProperty("direction", 1);
+          if(player.getVelocity().x == 0 && !player.hasTag("tp")) {
+            //player.sendMessage("右に障壁");
+            //player.teleport({...player.location, z: Math.floor(player.location.z)+0.5});
+            if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1})) {
+              player.applyKnockback(0, (player.location.z > Math.floor(player.location.z)+0.5) ? -1 : 1, strength, 0);
+              player.addTag("tp");
+              myTimeout(1, ()=>{
+                player.removeTag("tp");
+              })
+            }else{
+              if(player.location.z > Math.floor(player.location.z) + 1 - size) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1}) &&
+                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z+1})}).length == 0 &&
+                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z+1})}).length == 0
+                ) {
+                  player.applyKnockback(0, 1, strength*2, 0);
+                  player.addTag("tp");
+                  myTimeout(1, ()=>{
+                    player.removeTag("tp");
+                  })
+                }
+              }else if(player.location.z < Math.floor(player.location.z) + size) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1}) &&
+                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z-1})}).length == 0 &&
+                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z-1})}).length == 0
+                ) {
+                  player.applyKnockback(0, -1, strength*2, 0);
+                  player.addTag("tp");
+                  myTimeout(1, ()=>{
+                    player.removeTag("tp");
+                  })
+                }
+              }
+            }
+          }
+        }
+      }else{
+        if(moveVector.y > 0) {
+          player.setDynamicProperty("direction", 0);
+          if(player.getVelocity().z == 0 && !player.hasTag("tp")) {
+            //player.sendMessage("上に障壁");
+            // player.teleport({...player.location, x: Math.floor(player.location.x)+0.5});
+            if(tryTeleport(player.dimension, {...player.location, z: player.location.z+1})) {
+              player.applyKnockback((player.location.x > Math.floor(player.location.x)+0.5) ? -1 : 1, 0, strength, 0);
+              player.addTag("tp");
+              myTimeout(1, ()=>{
+                player.removeTag("tp");
+              })
+            }else{
+              if(player.location.x > Math.floor(player.location.x) + 1 - size) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1}) &&
+                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z+1})}).length == 0 &&
+                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z+1})}).length == 0
+                ) {
+                  player.applyKnockback(1, 0, strength*2, 0);
+                  player.addTag("tp");
+                  myTimeout(1, ()=>{
+                    player.removeTag("tp");
+                  })
+                }
+              }else if(player.location.x < Math.floor(player.location.x) + size) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1}) &&
+                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z+1})}).length == 0 &&
+                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z+1})}).length == 0
+                ) {
+                  player.applyKnockback(-1, 0, strength*2, 0);
+                  player.addTag("tp");
+                  myTimeout(1, ()=>{
+                    player.removeTag("tp");
+                  })
+                }
+              }
+            }
+          }
+        }else{
+          player.setDynamicProperty("direction", 2);
+          if(player.getVelocity().z == 0 && !player.hasTag("tp")) {
+            //player.sendMessage("下に障壁");
+            // player.teleport({...player.location, x: Math.floor(player.location.x)+0.5});
+            if(tryTeleport(player.dimension, {...player.location, z: player.location.z-1})) {
+              player.applyKnockback((player.location.x > Math.floor(player.location.x)+0.5) ? -1 : 1, 0, strength, 0);
+              player.addTag("tp");
+              myTimeout(1, ()=>{
+                player.removeTag("tp");
+              })
+            }else{
+              if(player.location.x > Math.floor(player.location.x) + 1 - size) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1}) &&
+                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z-1})}).length == 0 &&
+                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z-1})}).length == 0
+                ) {
+                  player.applyKnockback(1, 0, strength*2, 0);
+                  player.addTag("tp");
+                  myTimeout(1, ()=>{
+                    player.removeTag("tp");
+                  })
+                }
+              }else if(player.location.x < Math.floor(player.location.x) + size) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1}) &&
+                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z-1})}).length == 0 &&
+                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z-1})}).length == 0
+                ) {
+                  player.applyKnockback(-1, 0, strength*2, 0);
+                  player.addTag("tp");
+                  myTimeout(1, ()=>{
+                    player.removeTag("tp");
+                  })
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
     if(mc.world.getDynamicProperty("status") == 0) {
@@ -271,7 +431,7 @@ export function startGame(){
     player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, false);
     player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
   })
-  setScore("残り時間", "display", 100);
+  setScore("残り時間", "display", 120);
   tick = 0;
   myTimeout(20, ()=>{
     //プレイヤーをテレポート
