@@ -202,7 +202,7 @@ export function dropItem(player) {
   let speed = getScore(player, "speed") - roleList[player.getDynamicProperty("role")].initSpeed;
   let areas = Array.from(new mc.BlockVolume(stage[stageIndex].area[0].start, stage[stageIndex].area[0].end).getBlockLocationIterator());
   if(stage[stageIndex].area.length > 1) {
-    for(let i=1; i<stage[index].area.length; i++){
+    for(let i=1; i<stage[stageIndex].area.length; i++){
       areas.push(...Array.from(new mc.BlockVolume(stage[stageIndex].area[i].start, stage[stageIndex].area[i].end).getBlockLocationIterator()));
     }
   }
@@ -327,4 +327,23 @@ export function spiralOrderCoordinates(maxPoint, minPoint) {
   }
 
   return result;
+}
+
+/**
+ * 
+ * @param {mc.Dimension} dimension 
+ * @param {mc.Vector3} location 
+ * @return {boolean}
+ */
+export function tryTeleport(dimension, location){
+  let block = dimension.getBlock(location);
+  if(block.typeId == "minecraft:air") {
+    if(block.above().typeId == "minecraft:air"){
+      return true;
+    }else{
+      return false;
+    }
+  }else{
+    return false;
+  }
 }
