@@ -1,31 +1,77 @@
 import * as mc from "@minecraft/server";
 
+/**
+ * @typedef {Object} roleList
+ * @property {string} name - The name of the role.
+ * @property {{init:Number, max:Number}} bomb - The bomb properties.
+ * @property {{init:Number, max:Number}} power - The power properties.
+ * @property {{init:Number, max:Number}} speed - The speed properties.
+ * @property {{init:Boolean, able:Boolean}} blue - The blue properties.
+ * @property {{init:Boolean, able:Boolean}} kick - The kick properties.
+ * @property {{init:Boolean, able:Boolean}} punch - The punch properties.
+ */
 export const roleList = [
   {
-    name: "ノーマル",
-    initBomb: 1,
-    maxBomb: 8,
-    initPower: 2,
-    maxPower: 8,
-    initSpeed: 0,
-    maxSpeed: 8,
+    name: "スティーブ",
+    bomb: {init: 1, max: 8},
+    power: {init:2, max: 8},
+    speed: {init: 0, max: 8},
+    blue: {init: false, able: true},
+    kick: {init: false, able: true},
+    punch: {init: false, able: true},
   },
   {
-    name: "ウマ",
-    initBomb: 1,
-    maxBomb: 8,
-    initPower: 1,
-    maxPower: 5,
-    initSpeed: 6,
-    maxSpeed: 12
+    name: "ゾンビ",
+    bomb: {init: 5, max: 8},
+    power: {init: 2, max: 4},
+    speed: {init: 0, max: 2},
+    blue: {init: false, able: true},
+    kick: {init: false, able: false},
+    punch: {init: true, able: true},
   },
   {
     name: "クリーパー",
-    initBomb: 1,
-    maxBomb: 6,
-    initPower: 8,
-    maxPower: 16,
-    initSpeed: 0,
-    maxSpeed: 4
+    bomb: {init: 2, max: 4},
+    power: {init: 5, max: 8},
+    speed: {init: 0, max: 2},
+    blue: {init: false, able: true},
+    kick: {init: false, able: true},
+    punch: {init: false, able: false},
+  },
+  {
+    name: "スケルトン",
+    bomb: {init: 1, max: 3},
+    power: {init: 3, max: 5},
+    speed: {init: 0, max: 5},
+    blue: {init: true, able: true},
+    kick: {init: false, able: false},
+    punch: {init: false, able: true},
+  },
+  {
+    name: "ウィザースケルトン",
+    bomb: {init: 1, max: 2},
+    power: {init: 2, max: 4},
+    speed: {init: 5, max: 8},
+    blue: {init: false, able: true},
+    kick: {init: false, able: true},
+    punch: {init: false, able: true},
+  },
+  {
+    name: "ウィザー",
+    bomb: {init: 5, max: 5},
+    power: {init: 5, max: 5},
+    speed: {init: 5, max: 5},
+    blue: {init: false, able: true},
+    kick: {init: false, able: true},
+    punch: {init: false, able: false},
+  },
+  {
+    name: "アイアンゴーレム",
+    bomb: {init: 1, max: 1},
+    power: {init: 8, max: 8},
+    speed: {init: 0, max: 0},
+    blue: {init: false, able: true},
+    kick: {init: false, able: false},
+    punch: {init: true, able: true},
   }
 ]

@@ -72,12 +72,13 @@ export function openRoleSelect(player) {
       role_form.title("能力確認")
         .body(
           `§l§e${roleList[res.selection].name}§r\n\n` +
-          `初期爆弾数: ${roleList[res.selection].initBomb}\n` +
-          `最大爆弾数: ${roleList[res.selection].maxBomb}\n` +
-          `初期爆風: ${roleList[res.selection].initPower}\n` +
-          `最大爆風: ${roleList[res.selection].maxPower}\n` +
-          `初期移動速度: ${roleList[res.selection].initSpeed}\n` +
-          `最大移動速度: ${roleList[res.selection].maxSpeed}`
+          `§l§cTNT個数§r§l: §a${roleList[res.selection].bomb.init}§r§l/§d${roleList[res.selection].bomb.max}§r\n` +
+          `§l§6火力§r§l: §a${roleList[res.selection].power.init}§r§l/§d${roleList[res.selection].power.max}§r\n` +
+          `§l§bスピード§r§l: §a${roleList[res.selection].speed.init}§r§l/§d${roleList[res.selection].speed.max}§r\n` +
+          `\n§l<<§d特殊アイテム§r§l>>§r\n` +
+          `§l§9貫通TNT§r§l: ${roleList[res.selection].blue.init ? "§a所持" : roleList[res.selection].blue.able ? "§e有効" : "§7無効"}§r\n` +
+          `§l§cキック§r§l: ${roleList[res.selection].kick.init ? "§a所持" : roleList[res.selection].kick.able ? "§e有効" : "§7無効"}§r\n` +
+          `§l§bパンチ§r§l: ${roleList[res.selection].punch.init ? "§a所持" : roleList[res.selection].punch.able ? "§e有効" : "§7無効"}§r\n`
         )
         .button2("選択")
         .button1("キャンセル");

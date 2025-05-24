@@ -1,7 +1,9 @@
 import * as mc from "@minecraft/server";
-import { getCenter, explode_block, explode_particle, clearField, myTimeout, setField, getScore, setScore, addScore, compLocation, spiralOrderCoordinates, dropItem, tryTeleport } from "./lib.js";
+import { setField, getScore, setScore, addScore, compLocation, spiralOrderCoordinates, dropItem, tryTeleport } from "./lib.js";
+import * as lib from "./lib.js";
 import "./menu.js";
 import "./button.js";
+import "./item.js";
 import { roleList } from "./role.js";
 import { breakable_block, roby, stage, through_block } from "./const.js";
 
@@ -20,9 +22,9 @@ mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
     mc.world.setDynamicProperty("status", 0);
   }
   if(data.id == "tnt:set_camera"){
-    //data.sourceEntity.camera.setCamera("minecraft:fixed_boom", {rotation: {x: 75, y: 90}, entityOffset: {x:0, y:10, z:-5}});
+    /** @type {number}*/
     let index = mc.world.getDynamicProperty("stage");
-    let center = getCenter(stage[index].area);
+    let center = lib.getCenter(stage[index].area);
     data.sourceEntity.camera.setCamera("minecraft:free", {location: {...center, y:center.y+12, z:center.z-3}, facingLocation: center})
     data.sourceEntity.teleport(data.sourceEntity.location, {rotation: {x:0, y:0}});
     data.sourceEntity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, false);
@@ -47,6 +49,9 @@ mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
     mc.world.getPlayers().forEach(player=>{
       player.removeTag("player");
       player.removeTag("dead");
+      player.removeTag("kick");
+      player.removeTag("punch");
+      player.removeTag("tp");
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, true);
@@ -63,17 +68,22 @@ mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
     mc.world.getDimension("overworld").getEntities({excludeTypes:["minecraft:player"]}).forEach(entity=>{
       entity.remove();
     })
-    stage[mc.world.getDynamicProperty("stage")].area.forEach(a=>{
-      clearField(mc.world.getDimension("overworld"), a.start, a.end);
-    })
+    /** @type {Number};*/
+    let stageIndex = mc.world.getDynamicProperty("stage");
+    lib.clearField(mc.world.getDimension("overworld"), stage[stageIndex].area.start, stage[stageIndex].area.end);
     mc.world.setDynamicProperty("status", 0);
     mc.world.setDynamicProperty("stage", 0);
+  }
+  if(data.id == "tnt:test") {
+    mc.world.structureManager.place("village", data.sourceEntity.dimension, data.sourceEntity.location);
   }
 })
 
 mc.system.runInterval(()=>{
   const players = mc.world.getPlayers();
   const joinPlayers = mc.world.getPlayers({excludeTags:["spectator"]});
+  /** @type {Number} */
+  let stageIndex = mc.world.getDynamicProperty("stage");
   players.forEach(player=>{
     if(!mc.world.scoreboard.getObjective("bomb").getParticipants().includes(player.scoreboardIdentity)) {
       setScore(player, "bomb", 1);
@@ -89,42 +99,50 @@ mc.system.runInterval(()=>{
     }
 
     //入力方向検知
-    let size = 0.2
-    let strength = 0.3
+    let size = 0.2;
+    let strength = 0.3;
+    let delay = 5;
     let moveVector = player.inputInfo.getMovementVector();
     if((moveVector.x != 0 || moveVector.y != 0) && mc.world.getDynamicProperty("status") == 2) {
       if(Math.abs(moveVector.x) > Math.abs(moveVector.y)) {
         if(moveVector.x > 0) {
-          player.setDynamicProperty("direction", 3);
+          player.setDynamicProperty("direction", 3);//左
           if(player.getVelocity().x == 0 && !player.hasTag("tp")) {
-            //player.sendMessage("左に障壁");
-            //player.teleport({...player.location, z: Math.floor(player.location.z)+0.5});
-            if(player.dimension.getBlock({...player.location, x: player.location.x+1}).typeId == "minecraft:air") {
+            //キック
+            if(player.hasTag("kick")){
+              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x:player.location.x+1})});
+              if(touchTNT.length > 0) {
+                touchTNT.forEach(tnt=>{
+                  tnt.setDynamicProperty("direction", 3);
+                  tnt.setDynamicProperty("kickOwnerId", player.id);
+                })
+                player.addTag("tp");
+                lib.myTimeout(delay, ()=>{
+                  player.removeTag("tp");
+                })
+              }
+            }
+            //通り道検知
+            if(!player.hasTag("tp") && player.dimension.getBlock({...player.location, x: player.location.x+1}).typeId == "minecraft:air") {
               player.applyKnockback(0, (player.location.z > Math.floor(player.location.z)+0.5) ? -1 : 1, strength, 0);
               player.addTag("tp");
-              myTimeout(1, ()=>{
+              lib.myTimeout(delay, ()=>{
                 player.removeTag("tp");
               })
             }else{
               if(player.location.z > Math.floor(player.location.z) + 1 - size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1}) && 
-                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z+1})}).length == 0 &&
-                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z+1})}).length == 0
-                ) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1})) {
                   player.applyKnockback(0, 1, strength*2, 0);
                   player.addTag("tp");
-                  myTimeout(1, ()=>{
+                  lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
                   })
                 }
               }else if(player.location.z < Math.floor(player.location.z) + size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1}) &&
-                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z-1})}).length == 0 &&
-                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z-1})}).length == 0
-                ) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1})) {
                   player.applyKnockback(0, -1, strength*2, 0);
                   player.addTag("tp");
-                  myTimeout(1, ()=>{
+                  lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
                   })
                 }
@@ -132,36 +150,43 @@ mc.system.runInterval(()=>{
             }
           }
         }else{
-          player.setDynamicProperty("direction", 1);
+          player.setDynamicProperty("direction", 1);//右
           if(player.getVelocity().x == 0 && !player.hasTag("tp")) {
-            //player.sendMessage("右に障壁");
-            //player.teleport({...player.location, z: Math.floor(player.location.z)+0.5});
-            if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1})) {
+            //キック
+            if(player.hasTag("kick")){
+              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x:player.location.x-1})});
+              if(touchTNT.length > 0) {
+                touchTNT.forEach(tnt=>{
+                  tnt.setDynamicProperty("direction", 1);
+                  tnt.setDynamicProperty("kickOwnerId", player.id);
+                })
+                player.addTag("tp");
+                lib.myTimeout(delay, ()=>{
+                  player.removeTag("tp");
+                })
+              }
+            }
+            //通り道検知
+            if(!player.hasTag("tp") && tryTeleport(player.dimension, {...player.location, x: player.location.x-1})) {
               player.applyKnockback(0, (player.location.z > Math.floor(player.location.z)+0.5) ? -1 : 1, strength, 0);
               player.addTag("tp");
-              myTimeout(1, ()=>{
+              lib.myTimeout(delay, ()=>{
                 player.removeTag("tp");
               })
             }else{
               if(player.location.z > Math.floor(player.location.z) + 1 - size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1}) &&
-                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z+1})}).length == 0 &&
-                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z+1})}).length == 0
-                ) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1})) {
                   player.applyKnockback(0, 1, strength*2, 0);
                   player.addTag("tp");
-                  myTimeout(1, ()=>{
+                  lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
                   })
                 }
               }else if(player.location.z < Math.floor(player.location.z) + size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1}) &&
-                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z-1})}).length == 0 &&
-                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z-1})}).length == 0
-                ) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1})) {
                   player.applyKnockback(0, -1, strength*2, 0);
                   player.addTag("tp");
-                  myTimeout(1, ()=>{
+                  lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
                   })
                 }
@@ -171,36 +196,43 @@ mc.system.runInterval(()=>{
         }
       }else{
         if(moveVector.y > 0) {
-          player.setDynamicProperty("direction", 0);
+          player.setDynamicProperty("direction", 0);//上
           if(player.getVelocity().z == 0 && !player.hasTag("tp")) {
-            //player.sendMessage("上に障壁");
-            // player.teleport({...player.location, x: Math.floor(player.location.x)+0.5});
-            if(tryTeleport(player.dimension, {...player.location, z: player.location.z+1})) {
+            //キック
+            if(player.hasTag("kick")){
+              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, z:player.location.z+1})});
+              if(touchTNT.length > 0) {
+                touchTNT.forEach(tnt=>{
+                  tnt.setDynamicProperty("direction", 0);
+                  tnt.setDynamicProperty("kickOwnerId", player.id);
+                })
+                player.addTag("tp");
+                lib.myTimeout(delay, ()=>{
+                  player.removeTag("tp");
+                })
+              }
+            }
+            //通り道検知
+            if(!player.hasTag("tp") && tryTeleport(player.dimension, {...player.location, z: player.location.z+1})) {
               player.applyKnockback((player.location.x > Math.floor(player.location.x)+0.5) ? -1 : 1, 0, strength, 0);
               player.addTag("tp");
-              myTimeout(1, ()=>{
+              lib.myTimeout(delay, ()=>{
                 player.removeTag("tp");
               })
             }else{
               if(player.location.x > Math.floor(player.location.x) + 1 - size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1}) &&
-                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z+1})}).length == 0 &&
-                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z+1})}).length == 0
-                ) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1})) {
                   player.applyKnockback(1, 0, strength*2, 0);
                   player.addTag("tp");
-                  myTimeout(1, ()=>{
+                  lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
                   })
                 }
               }else if(player.location.x < Math.floor(player.location.x) + size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1}) &&
-                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z+1})}).length == 0 &&
-                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z+1})}).length == 0
-                ) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1})) {
                   player.applyKnockback(-1, 0, strength*2, 0);
                   player.addTag("tp");
-                  myTimeout(1, ()=>{
+                  lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
                   })
                 }
@@ -208,36 +240,43 @@ mc.system.runInterval(()=>{
             }
           }
         }else{
-          player.setDynamicProperty("direction", 2);
+          player.setDynamicProperty("direction", 2);//下
           if(player.getVelocity().z == 0 && !player.hasTag("tp")) {
-            //player.sendMessage("下に障壁");
-            // player.teleport({...player.location, x: Math.floor(player.location.x)+0.5});
-            if(tryTeleport(player.dimension, {...player.location, z: player.location.z-1})) {
+            //キック
+            if(player.hasTag("kick")){
+              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, z:player.location.z-1})});
+              if(touchTNT.length > 0) {
+                touchTNT.forEach(tnt=>{
+                  tnt.setDynamicProperty("direction", 2);
+                  tnt.setDynamicProperty("kickOwnerId", player.id);
+                })
+                player.addTag("tp");
+                lib.myTimeout(delay, ()=>{
+                  player.removeTag("tp");
+                })
+              }
+            }
+            //通り道検知
+            if(!player.hasTag("tp") && tryTeleport(player.dimension, {...player.location, z: player.location.z-1})) {
               player.applyKnockback((player.location.x > Math.floor(player.location.x)+0.5) ? -1 : 1, 0, strength, 0);
               player.addTag("tp");
-              myTimeout(1, ()=>{
+              lib.myTimeout(delay, ()=>{
                 player.removeTag("tp");
               })
             }else{
               if(player.location.x > Math.floor(player.location.x) + 1 - size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1}) &&
-                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z-1})}).length == 0 &&
-                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x+1, z: player.location.z-1})}).length == 0
-                ) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1})) {
                   player.applyKnockback(1, 0, strength*2, 0);
                   player.addTag("tp");
-                  myTimeout(1, ()=>{
+                  lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
                   })
                 }
               }else if(player.location.x < Math.floor(player.location.x) + size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1}) &&
-                  player.dimension.getEntities({type: "altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z-1})}).length == 0 &&
-                  player.dimension.getEntities({type: "altivelis:pressure_block"}).filter(e=>{return compLocation(e.location, {...player.location, x: player.location.x-1, z: player.location.z-1})}).length == 0
-                ) {
+                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1})) {
                   player.applyKnockback(-1, 0, strength*2, 0);
                   player.addTag("tp");
-                  myTimeout(1, ()=>{
+                  lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
                   })
                 }
@@ -252,9 +291,9 @@ mc.system.runInterval(()=>{
       //ステータス表示
       player.onScreenDisplay.setActionBar(
         `あなたは${(player.hasTag("spectator") ? "§l§7観戦者§r" : "§l§a参加者§r")}です§r\n` +
-        `現在の人数: §l${(joinPlayers.length > stage[mc.world.getDynamicProperty("stage")].spawn.length) ? "§c" : "§b"}${joinPlayers.length}§r\n` +
+        `現在の人数: §l${(joinPlayers.length > stage[stageIndex].spawn.length) ? "§c" : "§b"}${joinPlayers.length}§r\n` +
         `能力: §l§6${roleList[player.getDynamicProperty("role")].name}§r\n` +
-        `ステージ: §l§e${stage[mc.world.getDynamicProperty("stage")].name}§r\n`
+        `ステージ: §l§e${stage[stageIndex].name}§r\n`
       )
     }
 
@@ -269,13 +308,19 @@ mc.system.runInterval(()=>{
 
       //ステータス表示
       if(player.hasTag("player")){
+        /**
+         * @type {roleList}
+         */
         let role = roleList[player.getDynamicProperty("role")];
         player.onScreenDisplay.setActionBar(
           `§l能力: §e${role.name}§r\n` +
-          `§l§cTNT個数§r: §l${getScore(player,"bomb")==role.maxBomb ? "§d" : "§a"}${getScore(player,"bomb")}§r/${role.maxBomb}\n` +
-          `§l§6火力§r: §l${getScore(player,"power")==role.maxPower ? "§d" : "§a"}${getScore(player,"power")}§r/${role.maxPower}\n` +
-          `§l§bスピード§r: §l${getScore(player,"speed")==role.maxSpeed ? "§d" : "§a"}${getScore(player,"speed")}§r/${role.maxSpeed}\n` +
-          `§l§4TNT§r: §l§g${["通常", "貫通"][player.getDynamicProperty("tnt")]}§r\n`
+          `§l§cTNT個数§r: §l${getScore(player,"bomb")==role.bomb.max ? "§d" : "§a"}${getScore(player,"bomb")}§r/${role.bomb.max}\n` +
+          `§l§6火力§r: §l${getScore(player,"power")==role.power.max ? "§d" : "§a"}${getScore(player,"power")}§r/${role.power.max}\n` +
+          `§l§bスピード§r: §l${getScore(player,"speed")==role.speed.max ? "§d" : "§a"}${getScore(player,"speed")}§r/${role.speed.max}\n` +
+          `§l§4TNT§r: §l§g${["通常", "貫通"][player.getDynamicProperty("tnt")]}§r\n` +
+          `§l§dアイテム§r\n` +
+          `${player.hasTag("kick") ? "§f" : "§8"}§lキック§r\n` +
+          `${player.hasTag("punch") ? "§f" : "§8"}§lパンチ§r\n`
         )
       }
     }
@@ -283,26 +328,45 @@ mc.system.runInterval(()=>{
     //アイテム取得
     let item = player.dimension.getEntities({location:{x:Math.floor(player.location.x), y:Math.floor(player.location.y), z:Math.floor(player.location.z)}, volume:{x:0, y:0, z:0}, type: "altivelis:marker"});
     if(item.length > 0) {
+      /**
+       * @type {roleList}
+       */
       let role = roleList[player.getDynamicProperty("role")];
       item.forEach(entity => {
         switch(entity.getTags()[0]){
           case "bomb":
-            if(getScore(player, "bomb") < role.maxBomb) {
+            if(getScore(player, "bomb") < role.bomb.max) {
               addScore(player, "bomb", 1);
             }
             break;
           case "power":
-            if(getScore(player, "power") < role.maxPower) {
+            if(getScore(player, "power") < role.power.max) {
               addScore(player, "power", 1);
             }
             break;
           case "speed":
-            if(getScore(player, "speed") < role.maxSpeed) {
+            if(getScore(player, "speed") < role.speed.max) {
               addScore(player, "speed", 1);
             }
             break;
           case "blue_tnt":
-            player.setDynamicProperty("tnt", 1);
+            if(role.blue.able) player.setDynamicProperty("tnt", 1);
+            break;
+          case "kick":
+            if(role.kick.able) player.addTag("kick");
+            break;
+          case "punch":
+            if(role.punch.able) {
+              player.addTag("punch");
+              let slot = player.getComponent(mc.EntityInventoryComponent.componentId).container.getSlot(0);
+              let item = new mc.ItemStack("altivelis:punch", 1);
+              item.lockMode = mc.ItemLockMode.slot;
+              slot.setItem(item);
+            }
+            break;
+          case "full_fire":
+            setScore(player, "power", role.power.max);
+            break;
         }
         player.playSound("random.orb", {location: player.location, volume: 10});
         entity.remove();
@@ -314,22 +378,67 @@ mc.system.runInterval(()=>{
   mc.world.getDimension("overworld").getEntities({type: "altivelis:marker"}).forEach(marker=>{
     switch(marker.getTags()[0]){
       case "bomb":
-        marker.dimension.spawnParticle("altivelis:tnt_particle", marker.location);
+        marker.dimension.spawnParticle("altivelis:tnt_particle", {...marker.location, y: marker.location.y+0.5});
         break;
       case "power":
-        marker.dimension.spawnParticle("altivelis:power_particle", marker.location);
+        marker.dimension.spawnParticle("altivelis:power_particle", {...marker.location, y: marker.location.y+0.5});
         break;
       case "speed":
-        marker.dimension.spawnParticle("altivelis:speed_particle", marker.location);
+        marker.dimension.spawnParticle("altivelis:speed_particle", {...marker.location, y: marker.location.y+0.5});
         break;
       case "blue_tnt":
-        marker.dimension.spawnParticle("altivelis:bluetnt_particle", marker.location);
+        marker.dimension.spawnParticle("altivelis:bluetnt_particle", {...marker.location, y: marker.location.y+0.5});
+        break;
+      case "kick":
+        marker.dimension.spawnParticle("altivelis:kick_particle", {...marker.location, y: marker.location.y+0.5});
+        break;
+      case "punch":
+        marker.dimension.spawnParticle("altivelis:punch_particle", {...marker.location, y: marker.location.y+0.5});
+        break;
+      case "shot":
+        marker.dimension.spawnParticle("altivelis:shot_particle", {...marker.location, y: marker.location.y+0.5});
+        break;
+      case "full_fire":
+        marker.dimension.spawnParticle("altivelis:full_fire_particle", {...marker.location, y: marker.location.y+0.5});
         break;
     }
     if(through_block.includes(mc.world.getDimension("overworld").getBlock({...marker.location, y: marker.location.y-1}).typeId)){
       marker.teleport({...marker.location, y: marker.location.y-1});
     }
   })
+
+  //TNT移動
+  mc.world.getDimension("overworld").getEntities({type: "altivelis:tnt"}).filter(e=>{return e.getDynamicProperty("direction") != undefined}).forEach(tnt=>{
+    let owner = mc.world.getPlayers().filter(e=>{return e.id == tnt.getDynamicProperty("kickOwnerId")})[0];
+    let dir = tnt.getDynamicProperty("direction");
+    if(
+      (owner.inputInfo.getButtonState(mc.InputButton.Sneak) == mc.ButtonState.Pressed) ||
+      (!tryTeleport(tnt.dimension, {...tnt.location, x:tnt.location.x+(dir==1?-1:dir==3?1:0), z:tnt.location.z+(dir==0?1:dir==2?-1:0)})) ||
+      (players.filter(e=>{return compLocation(e.location, {...tnt.location, x:tnt.location.x+(dir==1?-1:dir==3?1:0), z:tnt.location.z+(dir==0?1:dir==2?-1:0)})}).length > 0)
+    ) {
+      tnt.teleport({x:Math.floor(tnt.location.x)+0.5, y:Math.floor(tnt.location.y), z:Math.floor(tnt.location.z)+0.5});
+      tnt.clearVelocity();
+      tnt.setDynamicProperty("direction");
+      tnt.setDynamicProperty("kickOwnerId");
+    }
+    let speed = 0.4;
+    tnt.clearVelocity();
+    switch(tnt.getDynamicProperty("direction")){
+      case 0:
+        tnt.applyImpulse({x:0, y:0, z:speed});
+        break;
+      case 1:
+        tnt.applyImpulse({x:-speed, y:0, z:0});
+        break;
+      case 2:
+        tnt.applyImpulse({x:0, y:0, z:-speed});
+        break;
+      case 3:
+        tnt.applyImpulse({x:speed, y:0, z:0});
+        break;
+    }
+  })
+
   if(mc.world.getDynamicProperty("status") == 2) {
     //タイマー
     tick++;
@@ -383,6 +492,7 @@ mc.system.runInterval(()=>{
 export function startGame(){
   if(mc.world.getDynamicProperty("status") != 0) return;
   // ゲームを開始する
+  /** @type {Number} */
   let index = mc.world.getDynamicProperty("stage");
   let member = mc.world.getPlayers({excludeTags:["spectator"]});
   let tpmember = member.concat();
@@ -399,17 +509,9 @@ export function startGame(){
     tpmember[i] = tpmember[rand];
     tpmember[rand] = tmpStorage;
   }
-  let maxLocation = {x: -Infinity, y: -Infinity, z: -Infinity};
-  let minLocation = {x: Infinity, y: Infinity, z: Infinity};
-  stage[index].area.forEach(a=>{
-    setField(mc.world.getDimension("overworld"), a.start, a.end, stage[index].block, stage[index].spawn);
-    if(a.start.x < minLocation.x) minLocation.x = a.start.x;
-    if(a.start.y < minLocation.y) minLocation.y = a.start.y;
-    if(a.start.z < minLocation.z) minLocation.z = a.start.z;
-    if(a.end.x > maxLocation.x) maxLocation.x = a.end.x;
-    if(a.end.y > maxLocation.y) maxLocation.y = a.end.y;
-    if(a.end.z > maxLocation.z) maxLocation.z = a.end.z;
-  })
+  setField(mc.world.getDimension("overworld"), stage[index]);
+  let maxLocation = stage[index].area.end;
+  let minLocation = stage[index].area.start;
   pressure_location = spiralOrderCoordinates({...maxLocation, x:maxLocation.x+1, z:maxLocation.z+1}, {...minLocation, x:minLocation.x-1, z:minLocation.z-1});
   pressure_rate = Math.ceil(55*20 / pressure_location.length);
   mc.world.setDynamicProperty("status", 1);
@@ -426,14 +528,14 @@ export function startGame(){
     entity.remove();
   })
   mc.world.getPlayers().forEach(player=>{
-    player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, false);
+    // player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, false);
     player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, false);
     player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, false);
     player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
   })
   setScore("残り時間", "display", 120);
   tick = 0;
-  myTimeout(20, ()=>{
+  lib.myTimeout(20, ()=>{
     //プレイヤーをテレポート
     for(let i=0; i<tpmember.length; i++){
       if(tpmember[i] != undefined) {
@@ -443,39 +545,45 @@ export function startGame(){
     }
     //プレイヤー初期化
     member.forEach(player=>{
+      /**
+       * @type {roleList}
+       */
       let role = roleList[player.getDynamicProperty("role")];
       player.addTag("player");
-      setScore(player, "bomb", role.initBomb);
-      setScore(player, "power", role.initPower);
-      setScore(player, "speed", role.initSpeed);
-      player.setDynamicProperty("tnt", 0);
+      player.removeTag("kick");
+      setScore(player, "bomb", role.bomb.init);
+      setScore(player, "power", role.power.init);
+      setScore(player, "speed", role.speed.init);
+      player.setDynamicProperty("tnt", role.blue.init ? 1 : 0);
       player.setDynamicProperty("bomb", 0);
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
     })
     mc.world.getPlayers().forEach(player=>{
-      let center = getCenter(stage[index].area);
-      player.camera.setCamera("minecraft:free", {location: {...center, y:center.y+12, z:center.z-3}, facingLocation: center});
-      player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
+      let center = lib.getCenter(stage[index].area);
+      //player.camera.setCamera("minecraft:free", {location: {...center, y:center.y+12, z:center.z-3}, facingLocation: center});
+      player.runCommand(`camera @s set minecraft:free pos ${center.x} ${center.y+12} ${center.z-3} facing ${center.x} ${center.y} ${center.z}`);
+      player.runCommand("controlscheme @s set camera_relative");
+      player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
       player.playMusic("record.precipice", {fade: 1, loop: true, volume: 0.3});
     })
 
-    myTimeout(20, ()=>{
-      myTimeout(20, ()=>{
+    lib.myTimeout(20, ()=>{
+      lib.myTimeout(20, ()=>{
         mc.world.getPlayers().forEach(player=>{
           player.onScreenDisplay.setTitle("§l§a3", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
           player.playSound("random.click", {location: player.location, volume: 10});
         })
-        myTimeout(20, ()=>{
+        lib.myTimeout(20, ()=>{
           mc.world.getPlayers().forEach(player=>{
             player.onScreenDisplay.setTitle("§l§a2", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
             player.playSound("random.click", {location: player.location, volume: 10});
           })
-          myTimeout(20, ()=>{
+          lib.myTimeout(20, ()=>{
             mc.world.getPlayers().forEach(player=>{
               player.onScreenDisplay.setTitle("§l§a1", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
               player.playSound("random.click", {location: player.location, volume: 10});
             })
-            myTimeout(20, ()=>{
+            lib.myTimeout(20, ()=>{
               mc.world.setDynamicProperty("status", 2);
               mc.world.getPlayers().forEach(player=>{
                 player.onScreenDisplay.setTitle("§l§bGO!", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
@@ -497,7 +605,10 @@ function endGame(){
   mc.world.setDynamicProperty("status", 3);
   let winner = mc.world.getPlayers({tags:["player"], excludeTags:["dead", "spectator"]});
   if(winner.length == 1) {
-    winner[0].teleport(winner[0].location, {facingLocation: {...winner[0].location, y: winner[0].location.y+5, z: winner[0].location.z-2}});
+    winner[0].runCommand("controlscheme @s clear");
+    lib.myTimeout(1, ()=>{
+      winner[0].teleport(winner[0].location, {facingLocation: {...winner[0].location, y: winner[0].location.y+5, z: winner[0].location.z-2}});
+    })
     winner[0].dimension.playSound("random.totem", winner[0].location, {volume: 10});
     mc.world.sendMessage(`${winner[0].nameTag}の勝利!`);
     mc.world.getPlayers().forEach(player=>{
@@ -513,10 +624,12 @@ function endGame(){
       player.onScreenDisplay.setTitle("§l§7DRAW\n\n\n", {fadeInDuration: 0, stayDuration: 50, fadeOutDuration: 10});
     })
   }
-  myTimeout(60, ()=>{
+  lib.myTimeout(60, ()=>{
     mc.world.getPlayers().forEach(player=>{
       player.removeTag("player");
       player.removeTag("dead");
+      player.removeTag("kick");
+      player.removeTag("punch");
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, true);
@@ -525,7 +638,7 @@ function endGame(){
       player.camera.clear();
       player.teleport(roby, {rotation: {x:0, y:0}});
       player.stopMusic();
-      player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Reset, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
+      player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Reset, [mc.HudElement.Health, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
       let moveComp = player.getComponent(mc.EntityMovementComponent.componentId);
       moveComp.resetToDefaultValue();
     })
@@ -535,9 +648,9 @@ function endGame(){
     mc.world.getDimension("overworld").getEntities({type: "altivelis:pressure_block"}).forEach(entity=>{
       entity.remove();
     })
-    stage[mc.world.getDynamicProperty("stage")].area.forEach(a=>{
-      clearField(mc.world.getDimension("overworld"), a.start, a.end);
-    })
+    /** @type {Number} */
+    let stageIndex = mc.world.getDynamicProperty("stage");
+    lib.clearField(mc.world.getDimension("overworld"), stage[stageIndex].area.start, stage[stageIndex].area.end);
     mc.world.setDynamicProperty("status", 0);
   })
 }
@@ -557,17 +670,18 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
       mc.world.getDimension("overworld").runCommand(`camerashake add @a 0.3 0.2 positional`);
     }
     // x+
-    explode_particle(data.dimension, pos);
+    lib.explode_particle(data.dimension, pos);
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, x: pos.x+i});
+      if(block.below().typeId == "minecraft:air") break;
       if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return compLocation(e.location, {...pos, x:pos.x+i})}).length == 0){
-        explode_particle(data.dimension, {...pos, x: pos.x+i});
+        lib.explode_particle(data.dimension, {...pos, x: pos.x+i});
       }
       else{
         if(blue && (breakable_block.includes(block.typeId) || through_block.includes(block.typeId))){
-          explode_block(data.dimension, {...pos, x: pos.x+i});
+          lib.explode_block(data.dimension, {...pos, x: pos.x+i});
         }else{
-          explode_block(data.dimension, {...pos, x: pos.x+i});
+          lib.explode_block(data.dimension, {...pos, x: pos.x+i});
           break;
         }
       }
@@ -575,14 +689,15 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     // x-
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, x: pos.x-i});
+      if(block.below().typeId == "minecraft:air") break;
       if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return compLocation(e.location, {...pos, x:pos.x-i})}).length == 0){
-        explode_particle(data.dimension, {...pos, x: pos.x-i});
+        lib.explode_particle(data.dimension, {...pos, x: pos.x-i});
       }
       else{
         if(blue && (breakable_block.includes(block.typeId) || through_block.includes(block.typeId))){
-          explode_block(data.dimension, {...pos, x: pos.x-i});
+          lib.explode_block(data.dimension, {...pos, x: pos.x-i});
         }else{
-          explode_block(data.dimension, {...pos, x: pos.x-i});
+          lib.explode_block(data.dimension, {...pos, x: pos.x-i});
           break;
         }
       }
@@ -590,14 +705,15 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     // z+
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, z: pos.z+i});
+      if(block.below().typeId == "minecraft:air") break;
       if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return compLocation(e.location, {...pos, z:pos.z+i})}).length == 0){
-        explode_particle(data.dimension, {...pos, z: pos.z+i});
+        lib.explode_particle(data.dimension, {...pos, z: pos.z+i});
       }
       else{
         if(blue && (breakable_block.includes(block.typeId) || through_block.includes(block.typeId))){
-          explode_block(data.dimension, {...pos, z: pos.z+i});
+          lib.explode_block(data.dimension, {...pos, z: pos.z+i});
         }else{
-          explode_block(data.dimension, {...pos, z: pos.z+i});
+          lib.explode_block(data.dimension, {...pos, z: pos.z+i});
           break;
         }
       }
@@ -605,14 +721,15 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     // z-
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, z: pos.z-i});
+      if(block.below().typeId == "minecraft:air") break;
       if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return compLocation(e.location, {...pos, z:pos.z-i})}).length == 0){
-        explode_particle(data.dimension, {...pos, z: pos.z-i});
+        lib.explode_particle(data.dimension, {...pos, z: pos.z-i});
       }
       else{
         if(blue && (breakable_block.includes(block.typeId) || through_block.includes(block.typeId))){
-          explode_block(data.dimension, {...pos, z: pos.z-i});
+          lib.explode_block(data.dimension, {...pos, z: pos.z-i});
         }else{
-          explode_block(data.dimension, {...pos, z: pos.z-i});
+          lib.explode_block(data.dimension, {...pos, z: pos.z-i});
           break;
         }
       }
@@ -620,11 +737,12 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     // y-
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, y: pos.y-i});
+      if(block.below().typeId == "minecraft:air") break;
       if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return compLocation(e.location, {...pos, y:pos.y-i})}).length == 0){
-        explode_particle(data.dimension, {...pos, y: pos.y-i});
+        lib.explode_particle(data.dimension, {...pos, y: pos.y-i});
       }
       else{
-        explode_block(data.dimension, {...pos, y: pos.y-i});
+        lib.explode_block(data.dimension, {...pos, y: pos.y-i});
         break;
       }
     }
@@ -678,15 +796,16 @@ mc.world.afterEvents.playerSpawn.subscribe(data=>{
   if(data.player.hasTag("dead")) data.player.removeTag("dead");
   data.player.setDynamicProperty("bomb", 0);
   data.player.teleport(roby, {rotation: {x:0, y:0}});
+  /** @type {Number} */
   let index = mc.world.getDynamicProperty("stage");
   if(mc.world.getDynamicProperty("status") > 0) {
     data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, false);
     data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, false);
     data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, false);
     data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
-    let center = getCenter(stage[index].area);
+    let center = lib.getCenter(stage[index].area);
     data.player.camera.setCamera("minecraft:free", {location: {...center, y:center.y+12, z:center.z-3}, facingLocation: center});
-    data.player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
+    data.player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
     data.player.playMusic("record.precipice", {fade: 1, loop: true, volume: 0.3});
   }
 })
