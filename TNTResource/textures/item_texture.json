@@ -1,0 +1,12 @@
+{
+  "resource_pack_name": "altivelis",
+  "texture_name": "atlas.items",
+  "texture_data": {
+    "tntr:punch": {
+      "textures": "textures/items/gold_axe"
+    },
+    "tntr:shot": {
+      "textures": "textures/items/bow_pulling_2"
+    }
+  }
+}

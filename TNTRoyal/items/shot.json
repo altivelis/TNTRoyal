@@ -1,0 +1,35 @@
+{  
+  "format_version": "1.21.30",  
+  "minecraft:item": {  
+    "description": {  
+      "identifier": "altivelis:shot",  
+      "menu_category": {
+        "category": "equipment"
+      }  
+    },  
+    "components": {
+      "minecraft:max_stack_size": 1,  
+      "minecraft:icon": {  
+        "textures": {
+          "default": "tntr:shot"
+        }
+      },
+      "minecraft:display_name": {  
+        "value": "TNTショット"  
+      },
+      "minecraft:cooldown": {  
+        "category": "shot",  
+        "duration": 0.2
+      },
+      "minecraft:use_modifiers": {
+        "use_duration": 1.6
+      },
+      "minecraft:glint": true,
+      "minecraft:interact_button" : "TNTを投げ飛ばす",
+      "minecraft:rarity": "epic",
+      "minecraft:custom_components": [
+        "tntr:shot"
+      ]
+    }
+  }
+}
