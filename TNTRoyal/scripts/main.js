@@ -1,5 +1,4 @@
 import * as mc from "@minecraft/server";
-import { setField, getScore, setScore, addScore, compLocation, spiralOrderCoordinates, dropItem, tryTeleport } from "./lib.js";
 import * as lib from "./lib.js";
 import "./menu.js";
 import "./button.js";
@@ -86,13 +85,13 @@ mc.system.runInterval(()=>{
   let stageIndex = mc.world.getDynamicProperty("stage");
   players.forEach(player=>{
     if(!mc.world.scoreboard.getObjective("bomb").getParticipants().includes(player.scoreboardIdentity)) {
-      setScore(player, "bomb", 1);
+      lib.setScore(player, "bomb", 1);
     }
     if(!mc.world.scoreboard.getObjective("power").getParticipants().includes(player.scoreboardIdentity)) {
-      setScore(player, "power", 2);
+      lib.setScore(player, "power", 2);
     }
     if(!mc.world.scoreboard.getObjective("speed").getParticipants().includes(player.scoreboardIdentity)) {
-      setScore(player, "speed", 0);
+      lib.setScore(player, "speed", 0);
     }
     if(player.getDynamicProperty("role") == undefined) {
       player.setDynamicProperty("role", 0);
@@ -110,7 +109,7 @@ mc.system.runInterval(()=>{
           if(player.getVelocity().x == 0 && !player.hasTag("tp")) {
             //キック
             if(player.hasTag("kick")){
-              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x:player.location.x+1})});
+              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return lib.compLocation(e.location, {...player.location, x:player.location.x+1})});
               if(touchTNT.length > 0) {
                 touchTNT.forEach(tnt=>{
                   tnt.setDynamicProperty("direction", 3);
@@ -131,7 +130,7 @@ mc.system.runInterval(()=>{
               })
             }else{
               if(player.location.z > Math.floor(player.location.z) + 1 - size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1})) {
+                if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1})) {
                   player.applyKnockback(0, 1, strength*2, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
@@ -139,7 +138,7 @@ mc.system.runInterval(()=>{
                   })
                 }
               }else if(player.location.z < Math.floor(player.location.z) + size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1})) {
+                if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1})) {
                   player.applyKnockback(0, -1, strength*2, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
@@ -154,7 +153,7 @@ mc.system.runInterval(()=>{
           if(player.getVelocity().x == 0 && !player.hasTag("tp")) {
             //キック
             if(player.hasTag("kick")){
-              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, x:player.location.x-1})});
+              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return lib.compLocation(e.location, {...player.location, x:player.location.x-1})});
               if(touchTNT.length > 0) {
                 touchTNT.forEach(tnt=>{
                   tnt.setDynamicProperty("direction", 1);
@@ -167,7 +166,7 @@ mc.system.runInterval(()=>{
               }
             }
             //通り道検知
-            if(!player.hasTag("tp") && tryTeleport(player.dimension, {...player.location, x: player.location.x-1})) {
+            if(!player.hasTag("tp") && lib.tryTeleport(player.dimension, {...player.location, x: player.location.x-1})) {
               player.applyKnockback(0, (player.location.z > Math.floor(player.location.z)+0.5) ? -1 : 1, strength, 0);
               player.addTag("tp");
               lib.myTimeout(delay, ()=>{
@@ -175,7 +174,7 @@ mc.system.runInterval(()=>{
               })
             }else{
               if(player.location.z > Math.floor(player.location.z) + 1 - size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1})) {
+                if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1})) {
                   player.applyKnockback(0, 1, strength*2, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
@@ -183,7 +182,7 @@ mc.system.runInterval(()=>{
                   })
                 }
               }else if(player.location.z < Math.floor(player.location.z) + size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1})) {
+                if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1})) {
                   player.applyKnockback(0, -1, strength*2, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
@@ -200,7 +199,7 @@ mc.system.runInterval(()=>{
           if(player.getVelocity().z == 0 && !player.hasTag("tp")) {
             //キック
             if(player.hasTag("kick")){
-              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, z:player.location.z+1})});
+              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return lib.compLocation(e.location, {...player.location, z:player.location.z+1})});
               if(touchTNT.length > 0) {
                 touchTNT.forEach(tnt=>{
                   tnt.setDynamicProperty("direction", 0);
@@ -213,7 +212,7 @@ mc.system.runInterval(()=>{
               }
             }
             //通り道検知
-            if(!player.hasTag("tp") && tryTeleport(player.dimension, {...player.location, z: player.location.z+1})) {
+            if(!player.hasTag("tp") && lib.tryTeleport(player.dimension, {...player.location, z: player.location.z+1})) {
               player.applyKnockback((player.location.x > Math.floor(player.location.x)+0.5) ? -1 : 1, 0, strength, 0);
               player.addTag("tp");
               lib.myTimeout(delay, ()=>{
@@ -221,7 +220,7 @@ mc.system.runInterval(()=>{
               })
             }else{
               if(player.location.x > Math.floor(player.location.x) + 1 - size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1})) {
+                if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1})) {
                   player.applyKnockback(1, 0, strength*2, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
@@ -229,7 +228,7 @@ mc.system.runInterval(()=>{
                   })
                 }
               }else if(player.location.x < Math.floor(player.location.x) + size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1})) {
+                if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1})) {
                   player.applyKnockback(-1, 0, strength*2, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
@@ -244,7 +243,7 @@ mc.system.runInterval(()=>{
           if(player.getVelocity().z == 0 && !player.hasTag("tp")) {
             //キック
             if(player.hasTag("kick")){
-              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return compLocation(e.location, {...player.location, z:player.location.z-1})});
+              let touchTNT = player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return lib.compLocation(e.location, {...player.location, z:player.location.z-1})});
               if(touchTNT.length > 0) {
                 touchTNT.forEach(tnt=>{
                   tnt.setDynamicProperty("direction", 2);
@@ -257,7 +256,7 @@ mc.system.runInterval(()=>{
               }
             }
             //通り道検知
-            if(!player.hasTag("tp") && tryTeleport(player.dimension, {...player.location, z: player.location.z-1})) {
+            if(!player.hasTag("tp") && lib.tryTeleport(player.dimension, {...player.location, z: player.location.z-1})) {
               player.applyKnockback((player.location.x > Math.floor(player.location.x)+0.5) ? -1 : 1, 0, strength, 0);
               player.addTag("tp");
               lib.myTimeout(delay, ()=>{
@@ -265,7 +264,7 @@ mc.system.runInterval(()=>{
               })
             }else{
               if(player.location.x > Math.floor(player.location.x) + 1 - size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1})) {
+                if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1})) {
                   player.applyKnockback(1, 0, strength*2, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
@@ -273,7 +272,7 @@ mc.system.runInterval(()=>{
                   })
                 }
               }else if(player.location.x < Math.floor(player.location.x) + size) {
-                if(tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1})) {
+                if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1})) {
                   player.applyKnockback(-1, 0, strength*2, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
@@ -304,7 +303,7 @@ mc.system.runInterval(()=>{
       }
       //移動速度
       let moveComp = player.getComponent(mc.EntityMovementComponent.componentId);
-      moveComp.setCurrentValue(moveComp.defaultValue + 0.01 * getScore(player, "speed"));
+      moveComp.setCurrentValue(moveComp.defaultValue + 0.01 * lib.getScore(player, "speed"));
 
       //ステータス表示
       if(player.hasTag("player")){
@@ -314,9 +313,9 @@ mc.system.runInterval(()=>{
         let role = roleList[player.getDynamicProperty("role")];
         player.onScreenDisplay.setActionBar(
           `§l能力: §e${role.name}§r\n` +
-          `§l§cTNT個数§r: §l${getScore(player,"bomb")==role.bomb.max ? "§d" : "§a"}${getScore(player,"bomb")}§r/${role.bomb.max}\n` +
-          `§l§6火力§r: §l${getScore(player,"power")==role.power.max ? "§d" : "§a"}${getScore(player,"power")}§r/${role.power.max}\n` +
-          `§l§bスピード§r: §l${getScore(player,"speed")==role.speed.max ? "§d" : "§a"}${getScore(player,"speed")}§r/${role.speed.max}\n` +
+          `§l§cTNT個数§r: §l${lib.getScore(player,"bomb")==role.bomb.max ? "§d" : "§a"}${lib.getScore(player,"bomb")}§r/${role.bomb.max}\n` +
+          `§l§6火力§r: §l${lib.getScore(player,"power")==role.power.max ? "§d" : "§a"}${lib.getScore(player,"power")}§r/${role.power.max}\n` +
+          `§l§bスピード§r: §l${lib.getScore(player,"speed")==role.speed.max ? "§d" : "§a"}${lib.getScore(player,"speed")}§r/${role.speed.max}\n` +
           `§l§4TNT§r: §l§g${["通常", "貫通"][player.getDynamicProperty("tnt")]}§r\n` +
           `§l§dアイテム§r\n` +
           `${player.hasTag("kick") ? "§f" : "§8"}§lキック§r\n` +
@@ -335,18 +334,18 @@ mc.system.runInterval(()=>{
       item.forEach(entity => {
         switch(entity.getTags()[0]){
           case "bomb":
-            if(getScore(player, "bomb") < role.bomb.max) {
-              addScore(player, "bomb", 1);
+            if(lib.getScore(player, "bomb") < role.bomb.max) {
+              lib.addScore(player, "bomb", 1);
             }
             break;
           case "power":
-            if(getScore(player, "power") < role.power.max) {
-              addScore(player, "power", 1);
+            if(lib.getScore(player, "power") < role.power.max) {
+              lib.addScore(player, "power", 1);
             }
             break;
           case "speed":
-            if(getScore(player, "speed") < role.speed.max) {
-              addScore(player, "speed", 1);
+            if(lib.getScore(player, "speed") < role.speed.max) {
+              lib.addScore(player, "speed", 1);
             }
             break;
           case "blue_tnt":
@@ -362,10 +361,11 @@ mc.system.runInterval(()=>{
               let item = new mc.ItemStack("altivelis:punch", 1);
               item.lockMode = mc.ItemLockMode.slot;
               slot.setItem(item);
+              player.selectedSlotIndex = 0;
             }
             break;
           case "full_fire":
-            setScore(player, "power", role.power.max);
+            lib.setScore(player, "power", role.power.max);
             break;
         }
         player.playSound("random.orb", {location: player.location, volume: 10});
@@ -413,8 +413,8 @@ mc.system.runInterval(()=>{
     let dir = tnt.getDynamicProperty("direction");
     if(
       (owner.inputInfo.getButtonState(mc.InputButton.Sneak) == mc.ButtonState.Pressed) ||
-      (!tryTeleport(tnt.dimension, {...tnt.location, x:tnt.location.x+(dir==1?-1:dir==3?1:0), z:tnt.location.z+(dir==0?1:dir==2?-1:0)})) ||
-      (players.filter(e=>{return compLocation(e.location, {...tnt.location, x:tnt.location.x+(dir==1?-1:dir==3?1:0), z:tnt.location.z+(dir==0?1:dir==2?-1:0)})}).length > 0)
+      (!lib.tryTeleport(tnt.dimension, {...tnt.location, x:tnt.location.x+(dir==1?-1:dir==3?1:0), z:tnt.location.z+(dir==0?1:dir==2?-1:0)})) ||
+      (players.filter(e=>{return lib.compLocation(e.location, {...tnt.location, x:tnt.location.x+(dir==1?-1:dir==3?1:0), z:tnt.location.z+(dir==0?1:dir==2?-1:0)})}).length > 0)
     ) {
       tnt.teleport({x:Math.floor(tnt.location.x)+0.5, y:Math.floor(tnt.location.y), z:Math.floor(tnt.location.z)+0.5});
       tnt.clearVelocity();
@@ -444,8 +444,8 @@ mc.system.runInterval(()=>{
     tick++;
     if(tick % 20 == 0) {
       tick = 0;
-      let time = getScore("残り時間", "display") - 1;
-      setScore("残り時間", "display", time);
+      let time = lib.getScore("残り時間", "display") - 1;
+      lib.setScore("残り時間", "display", time);
       if(time <= 0) {
         endGame();
       }
@@ -462,7 +462,7 @@ mc.system.runInterval(()=>{
       }
     }
     pressureTick++;
-    if(getScore("残り時間", "display") <= 55 && pressureTick % pressure_rate == 0) {
+    if(lib.getScore("残り時間", "display") <= 55 && pressureTick % pressure_rate == 0) {
       pressureTick = 0;
       if(pressure_location.length > 0) {
         let pos = pressure_location.shift();
@@ -471,7 +471,7 @@ mc.system.runInterval(()=>{
       }
     }
     mc.world.getDimension("overworld").getEntities({type: "altivelis:pressure_block"}).forEach(entity=>{
-      let overlap = entity.dimension.getEntities({excludeTypes:["altivelis:pressure_block"]}).filter(e=>{return compLocation(e.location, entity.location)});
+      let overlap = entity.dimension.getEntities({excludeTypes:["altivelis:pressure_block"]}).filter(e=>{return lib.compLocation(e.location, entity.location)});
       if(overlap.length > 0) {
         overlap.forEach(e=>{
           if(e.hasTag("player") && !e.hasTag("dead")) {
@@ -480,7 +480,7 @@ mc.system.runInterval(()=>{
             e.teleport(roby);
             e.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
             mc.world.sendMessage(`§c${e.nameTag}§rは金床に潰された！`);
-            dropItem(e);
+            lib.dropItem(e);
           }
         })
       }
@@ -509,10 +509,10 @@ export function startGame(){
     tpmember[i] = tpmember[rand];
     tpmember[rand] = tmpStorage;
   }
-  setField(mc.world.getDimension("overworld"), stage[index]);
+  lib.setField(mc.world.getDimension("overworld"), stage[index]);
   let maxLocation = stage[index].area.end;
   let minLocation = stage[index].area.start;
-  pressure_location = spiralOrderCoordinates({...maxLocation, x:maxLocation.x+1, z:maxLocation.z+1}, {...minLocation, x:minLocation.x-1, z:minLocation.z-1});
+  pressure_location = lib.spiralOrderCoordinates({...maxLocation, x:maxLocation.x+1, z:maxLocation.z+1}, {...minLocation, x:minLocation.x-1, z:minLocation.z-1});
   pressure_rate = Math.ceil(55*20 / pressure_location.length);
   mc.world.setDynamicProperty("status", 1);
   mc.world.sendMessage(`ゲームを開始します`);
@@ -533,7 +533,7 @@ export function startGame(){
     player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, false);
     player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
   })
-  setScore("残り時間", "display", 120);
+  lib.setScore("残り時間", "display", 120);
   tick = 0;
   lib.myTimeout(20, ()=>{
     //プレイヤーをテレポート
@@ -549,14 +549,28 @@ export function startGame(){
        * @type {roleList}
        */
       let role = roleList[player.getDynamicProperty("role")];
+      //初期化
       player.addTag("player");
       player.removeTag("kick");
-      setScore(player, "bomb", role.bomb.init);
-      setScore(player, "power", role.power.init);
-      setScore(player, "speed", role.speed.init);
-      player.setDynamicProperty("tnt", role.blue.init ? 1 : 0);
+      player.removeTag("punch");
       player.setDynamicProperty("bomb", 0);
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
+      //初期ステータス適用
+      lib.setScore(player, "bomb", role.bomb.init);
+      lib.setScore(player, "power", role.power.init);
+      lib.setScore(player, "speed", role.speed.init);
+      player.setDynamicProperty("tnt", role.blue.init ? 1 : 0);
+      if(role.kick.init) {
+        player.addTag("kick");
+      }
+      if(role.punch.init) {
+        player.addTag("punch");
+        let slot = player.getComponent(mc.EntityInventoryComponent.componentId).container.getSlot(0);
+        let item = new mc.ItemStack("altivelis:punch", 1);
+        item.lockMode = mc.ItemLockMode.slot;
+        slot.setItem(item);
+        player.selectedSlotIndex = 0;
+      }
     })
     mc.world.getPlayers().forEach(player=>{
       let center = lib.getCenter(stage[index].area);
@@ -674,7 +688,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, x: pos.x+i});
       if(block.below().typeId == "minecraft:air") break;
-      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return compLocation(e.location, {...pos, x:pos.x+i})}).length == 0){
+      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, x:pos.x+i})}).length == 0){
         lib.explode_particle(data.dimension, {...pos, x: pos.x+i});
       }
       else{
@@ -690,7 +704,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, x: pos.x-i});
       if(block.below().typeId == "minecraft:air") break;
-      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return compLocation(e.location, {...pos, x:pos.x-i})}).length == 0){
+      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, x:pos.x-i})}).length == 0){
         lib.explode_particle(data.dimension, {...pos, x: pos.x-i});
       }
       else{
@@ -706,7 +720,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, z: pos.z+i});
       if(block.below().typeId == "minecraft:air") break;
-      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return compLocation(e.location, {...pos, z:pos.z+i})}).length == 0){
+      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, z:pos.z+i})}).length == 0){
         lib.explode_particle(data.dimension, {...pos, z: pos.z+i});
       }
       else{
@@ -722,7 +736,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, z: pos.z-i});
       if(block.below().typeId == "minecraft:air") break;
-      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return compLocation(e.location, {...pos, z:pos.z-i})}).length == 0){
+      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, z:pos.z-i})}).length == 0){
         lib.explode_particle(data.dimension, {...pos, z: pos.z-i});
       }
       else{
@@ -738,7 +752,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, y: pos.y-i});
       if(block.below().typeId == "minecraft:air") break;
-      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return compLocation(e.location, {...pos, y:pos.y-i})}).length == 0){
+      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, y:pos.y-i})}).length == 0){
         lib.explode_particle(data.dimension, {...pos, y: pos.y-i});
       }
       else{
@@ -754,7 +768,7 @@ mc.world.afterEvents.itemUse.subscribe(data=>{
   let {source, itemStack} = data;
   if(data.source.getGameMode() != mc.GameMode.adventure) return;
   if(itemStack.typeId != "minecraft:tnt") return;
-  if(source.getDynamicProperty("bomb") != undefined && source.getDynamicProperty("bomb") >= mc.world.scoreboard.getObjective("bomb").getScore(source)) return;
+  if(source.getDynamicProperty("bomb") != undefined && source.getDynamicProperty("bomb") >= mc.world.scoreboard.getObjective("bomb").lib.getScore(source)) return;
   if(source.dimension.getEntities({location: source.location, maxDistance:0.5, type:"altivelis:tnt"}).length > 0) return;
   let pos = source.location;
   // mc.world.sendMessage(`x: ${Math.floor(pos.x)}, y: ${Math.floor(pos.y)}, z: ${Math.floor(pos.z)}`);
@@ -764,7 +778,7 @@ mc.world.afterEvents.itemUse.subscribe(data=>{
     tnt.addTag("blue");
   }
   tnt.owner = source;
-  tnt.setDynamicProperty("power", mc.world.scoreboard.getObjective("power").getScore(source));
+  tnt.setDynamicProperty("power", mc.world.scoreboard.getObjective("power").lib.getScore(source));
   if(source.getDynamicProperty("bomb") == undefined) source.setDynamicProperty("bomb", 1);
   else source.setDynamicProperty("bomb", source.getDynamicProperty("bomb")+1);
 })
@@ -774,7 +788,7 @@ mc.world.afterEvents.playerButtonInput.subscribe(data=>{
   if(mc.world.getDynamicProperty("status") != 2) return;
   let player = data.player;
   if(player.hasTag("dead")) return;
-  if(player.getDynamicProperty("bomb") != undefined && player.getDynamicProperty("bomb") >= mc.world.scoreboard.getObjective("bomb").getScore(player)) return;
+  if(player.getDynamicProperty("bomb") != undefined && player.getDynamicProperty("bomb") >= mc.world.scoreboard.getObjective("bomb").lib.getScore(player)) return;
   if(player.dimension.getEntities({location: player.location, maxDistance:0.5, type:"altivelis:tnt"}).length > 0) return;
   let pos = player.location;
   let tnt = player.dimension.spawnEntity("altivelis:tnt", {x: Math.floor(pos.x)+0.5, y: Math.floor(pos.y), z: Math.floor(pos.z)+0.5});
@@ -783,7 +797,7 @@ mc.world.afterEvents.playerButtonInput.subscribe(data=>{
     tnt.addTag("blue");
   }
   tnt.owner = player;
-  tnt.setDynamicProperty("power", mc.world.scoreboard.getObjective("power").getScore(player));
+  tnt.setDynamicProperty("power", mc.world.scoreboard.getObjective("power").lib.getScore(player));
   tnt.dimension.playSound("fire.ignite", tnt.location, {volume: 10});
   if(player.getDynamicProperty("bomb") == undefined) player.setDynamicProperty("bomb", 1);
   else player.setDynamicProperty("bomb", player.getDynamicProperty("bomb")+1);
