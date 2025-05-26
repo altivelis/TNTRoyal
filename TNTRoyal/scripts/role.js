@@ -70,7 +70,7 @@ export const roleList = [
     bomb: {init: 1, max: 1},
     power: {init: 8, max: 8},
     speed: {init: 0, max: 0},
-    blue: {init: false, able: true},
+    blue: {init: true, able: true},
     kick: {init: false, able: false},
     punch: {init: true, able: true},
   }

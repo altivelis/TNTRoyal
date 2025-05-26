@@ -70,8 +70,10 @@ export function getCenter(area) {
  * 爆風エフェクトを出す関数
  * @param {mc.Dimension} dimension
  * @param {mc.Vector3} location 
+ * @param {mc.Player | null} owner
+ * @param {boolean} revival
  */
-export function explode_particle(dimension, location){
+export function explode_particle(dimension, location, owner = undefined, revival = false){
   let molang = new mc.MolangVariableMap();
   molang.setColorRGB("color", {red: 1, green: 0.5, blue: 0});
   dimension.spawnParticle("tntr:explosion", {x:Math.floor(location.x)+0.5, y:Math.floor(location.y)+0.5, z:Math.floor(location.z)+0.5}, molang);
@@ -86,13 +88,74 @@ export function explode_particle(dimension, location){
       entity.remove();
       return;
     }
-    if(entity instanceof mc.Player && mc.world.getDynamicProperty("status") == 2){
+    if(entity instanceof mc.Player && mc.world.getDynamicProperty("status") == 2 && !entity.hasTag("revival") && !entity.hasTag("dead")) {
       entity.addTag("dead");
       entity.dimension.playSound("item.trident.thunder", entity.location, {volume: 10});
-      entity.teleport(roby);
-      entity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
       mc.world.sendMessage(`§c${entity.nameTag}§rは爆発に巻き込まれた！`);
+      //復活
+      if(revival && owner != undefined) {
+        owner.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
+        owner.teleport({x:Math.floor(entity.location.x)+0.5, y:Math.floor(entity.location.y)+0.5, z:Math.floor(entity.location.z)+0.5});
+        owner.removeTag("dead");
+        mc.world.sendMessage(`§a${owner.nameTag}§rが復活！！`);
+        //初期ステータス適用
+        /**@type {Number} */
+        let roleIndex = owner.getDynamicProperty("role");
+        let role = roleList[roleIndex];
+        setScore(owner, "bomb", role.bomb.init);
+        setScore(owner, "power", role.power.init);
+        setScore(owner, "speed", role.speed.init);
+        owner.setDynamicProperty("tnt", role.blue.init ? 1 : 0);
+        if(role.kick.init) {
+          owner.addTag("kick");
+        }
+        if(role.punch.init) {
+          owner.addTag("punch");
+          let slot = owner.getComponent(mc.EntityInventoryComponent.componentId).container.getSlot(0);
+          let item = new mc.ItemStack("altivelis:punch", 1);
+          item.lockMode = mc.ItemLockMode.slot;
+          slot.setItem(item);
+          owner.selectedSlotIndex = 0;
+        }
+        owner.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, true);
+        owner.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, true);
+        owner.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, true);
+        owner.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, true);
+        //無敵化、パーティクル
+        let runId = mc.system.runInterval(()=>{
+          owner.dimension.spawnParticle("minecraft:totem_particle", owner.location);
+        }, 2);
+        owner.addTag("revival");
+        myTimeout(40, ()=>{
+          owner.removeTag("revival");
+          mc.system.clearRun(runId);
+        })
+      }
       dropItem(entity);
+      /**@type {Number} */
+      let roleIndex = entity.getDynamicProperty("role");
+      let role = roleList[roleIndex];
+      setScore(entity, "bomb", role.bomb.init);
+      setScore(entity, "power", role.power.init);
+      setScore(entity, "speed", role.speed.init);
+      entity.setDynamicProperty("tnt", 0);
+      entity.removeTag("kick");
+      entity.removeTag("punch");
+      entity.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
+      if(getScore("残り時間", "display") <= 60) {
+        entity.teleport(roby);
+        entity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
+      }
+      else {
+        /**@type {Number} */
+        let stageIndex = mc.world.getDynamicProperty("stage");
+        let center = getCenter(stage[stageIndex].area);
+        entity.teleport({...center, y:center.y+1, z:stage[stageIndex].area.end.z+1.5});
+        let slot = entity.getComponent(mc.EntityInventoryComponent.componentId).container.getSlot(0);
+        slot.setItem(new mc.ItemStack("altivelis:shot"));
+        slot.getItem().lockMode = mc.ItemLockMode.slot;
+        entity.selectedSlotIndex = 0;
+      }
     }
   })
 }
@@ -101,16 +164,18 @@ export function explode_particle(dimension, location){
  * 爆風でブロックを破壊する関数
  * @param {mc.Dimension} dimension
  * @param {mc.Vector3} location
+ * @param {mc.Player | null} owner
+ * @param {boolean} revival
  */
-export function explode_block(dimension, location){
+export function explode_block(dimension, location, owner = undefined, revival = false) {
   let block = dimension.getBlock(location);
   if(block.typeId == "minecraft:air") {
-    explode_particle(dimension, location);
+    explode_particle(dimension, location, owner, revival);
     return;
   }
   if(breakable_block.includes(block.typeId)){
     dimension.setBlockType(location, "minecraft:air");
-    explode_particle(dimension, location);
+    explode_particle(dimension, location, owner, revival);
     if(Math.random() < 0.5) {
       let tag = "";
       let probabilities = [
@@ -161,28 +226,6 @@ export function clearField(dimension, start, end) {
     }
   }
 }
-
-/**
- * 
- * @param {mc.Dimension} dimension 
- * @param {mc.Vector3} start 
- * @param {mc.Vector3} end 
- * @param {string} blockType 
- * @param {mc.Vector3[]} spawn
- */
-// export function setField(dimension, start, end, blockType, spawn) {
-//   clearField(dimension, start, end);
-//   for(let x=start.x; x<=end.x; x++){
-//     for(let z=start.z; z<=end.z; z++){
-//       if(spawn.find(e=>{return Math.sqrt((e.x-x)**2 + (e.z-z)**2)<2}) != undefined) continue;
-//       if(dimension.getBlock({x:x, y:start.y, z:z}).typeId == "minecraft:air"){
-//         if(Math.random() < 0.9){
-//           dimension.setBlockType({x:x, y:start.y, z:z}, blockType);
-//         }
-//       }
-//     }
-//   }
-// }
 
 /**
  * ステージの準備をする

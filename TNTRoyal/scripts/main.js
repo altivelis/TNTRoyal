@@ -55,6 +55,10 @@ mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, true);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, true);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, true);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, true);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, true);
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
       player.camera.clear();
       player.teleport(roby, {rotation: {x:0, y:0}});
@@ -102,7 +106,7 @@ mc.system.runInterval(()=>{
     let strength = 0.3;
     let delay = 5;
     let moveVector = player.inputInfo.getMovementVector();
-    if((moveVector.x != 0 || moveVector.y != 0) && mc.world.getDynamicProperty("status") == 2) {
+    if((moveVector.x != 0 || moveVector.y != 0) && mc.world.getDynamicProperty("status") == 2 && !player.hasTag("dead")) {
       if(Math.abs(moveVector.x) > Math.abs(moveVector.y)) {
         if(moveVector.x > 0) {
           player.setDynamicProperty("direction", 3);//左
@@ -303,7 +307,12 @@ mc.system.runInterval(()=>{
       }
       //移動速度
       let moveComp = player.getComponent(mc.EntityMovementComponent.componentId);
-      moveComp.setCurrentValue(moveComp.defaultValue + 0.01 * lib.getScore(player, "speed"));
+      if(player.hasTag("dead")){
+        moveComp.setCurrentValue(moveComp.defaultValue);
+      }
+      else {
+        moveComp.setCurrentValue(moveComp.defaultValue + 0.01 * lib.getScore(player, "speed"));
+      }
 
       //ステータス表示
       if(player.hasTag("player")){
@@ -425,20 +434,25 @@ mc.system.runInterval(()=>{
     tnt.clearVelocity();
     switch(tnt.getDynamicProperty("direction")){
       case 0:
-        tnt.applyImpulse({x:0, y:0, z:speed});
+        // tnt.applyImpulse({x:0, y:0, z:speed});
+        tnt.teleport({...tnt.location, z:tnt.location.z+speed});
         break;
       case 1:
-        tnt.applyImpulse({x:-speed, y:0, z:0});
+        // tnt.applyImpulse({x:-speed, y:0, z:0});
+        tnt.teleport({...tnt.location, x:tnt.location.x-speed});
         break;
       case 2:
-        tnt.applyImpulse({x:0, y:0, z:-speed});
+        // tnt.applyImpulse({x:0, y:0, z:-speed});
+        tnt.teleport({...tnt.location, z:tnt.location.z-speed});
         break;
       case 3:
-        tnt.applyImpulse({x:speed, y:0, z:0});
+        // tnt.applyImpulse({x:speed, y:0, z:0});
+        tnt.teleport({...tnt.location, x:tnt.location.x+speed});
         break;
     }
   })
 
+  //ゲーム中のループ処理
   if(mc.world.getDynamicProperty("status") == 2) {
     //タイマー
     tick++;
@@ -457,11 +471,16 @@ mc.system.runInterval(()=>{
       if(time == 60) {
         mc.world.getPlayers().forEach(player=>{
           player.onScreenDisplay.setTitle("§l§c残り1分", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 10});
-          mc.world.sendMessage("§c金床が降り始めます")
+          mc.world.sendMessage("§c金床が降り始めます");
+          if(player.hasTag("dead")) {
+            player.teleport(roby);
+            player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
+          }
         })
       }
     }
     pressureTick++;
+    //プレッシャーブロック
     if(lib.getScore("残り時間", "display") <= 55 && pressureTick % pressure_rate == 0) {
       pressureTick = 0;
       if(pressure_location.length > 0) {
@@ -483,6 +502,45 @@ mc.system.runInterval(()=>{
             lib.dropItem(e);
           }
         })
+      }
+    })
+    //ミソボン
+    mc.world.getPlayers({tags:["player", "dead"], excludeTags:["spectator"]}).forEach(player=>{
+      if(player.location.z > stage[stageIndex].area.end.z+1 || (player.location.x > stage[stageIndex].area.start.x && player.location.x < stage[stageIndex].area.end.x+1)) {
+        if(player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveForward)) {
+          player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, false);
+        }
+      }else{
+        if(!player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveForward)) {
+          player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, true);
+        }
+      }
+      if(player.location.z < stage[stageIndex].area.start.z || (player.location.x > stage[stageIndex].area.start.x && player.location.x < stage[stageIndex].area.end.x+1)) {
+        if(player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveBackward)) {
+          player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, false);
+        }
+      }else{
+        if(!player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveBackward)) {
+          player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, true);
+        }
+      }
+      if(player.location.x > stage[stageIndex].area.end.x+1 || (player.location.z > stage[stageIndex].area.start.z && player.location.z < stage[stageIndex].area.end.z+1)) {
+        if(player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveLeft)) {
+          player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, false);
+        }
+      }else{
+        if(!player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveLeft)) {
+          player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, true);
+        }
+      }
+      if(player.location.x < stage[stageIndex].area.start.x || (player.location.z > stage[stageIndex].area.start.z && player.location.z < stage[stageIndex].area.end.z+1)) {
+        if(player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveRight)) {
+          player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, false);
+        }
+      }else{
+        if(!player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveRight)) {
+          player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, true);
+        }
       }
     })
   }
@@ -578,7 +636,8 @@ export function startGame(){
       player.runCommand(`camera @s set minecraft:free pos ${center.x} ${center.y+12} ${center.z-3} facing ${center.x} ${center.y} ${center.z}`);
       player.runCommand("controlscheme @s set camera_relative");
       player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
-      player.playMusic("record.precipice", {fade: 1, loop: true, volume: 0.3});
+      // player.playMusic("record.precipice", {fade: 1, loop: true, volume: 0.3});
+      player.runCommand("music play record.precipice 0.3 1 loop");
     })
 
     lib.myTimeout(20, ()=>{
@@ -648,6 +707,10 @@ function endGame(){
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, true);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, true);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, true);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, true);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, true);
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
       player.camera.clear();
       player.teleport(roby, {rotation: {x:0, y:0}});
@@ -677,25 +740,26 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
   let owner = data.source?.owner;
   let power = data.source.getDynamicProperty("power");
   let blue = data.source.hasTag("blue");
+  let revival = data.source.hasTag("revival");
   mc.system.run(()=>{
-    owner.setDynamicProperty("bomb", owner.getDynamicProperty("bomb")-1);
+    if(owner != undefined && !revival) owner.setDynamicProperty("bomb", owner.getDynamicProperty("bomb")-1);
     data.dimension.playSound("random.explode", pos, {volume: 4});
     if(power >= 8) {
       mc.world.getDimension("overworld").runCommand(`camerashake add @a 0.3 0.2 positional`);
     }
     // x+
-    lib.explode_particle(data.dimension, pos);
+    lib.explode_particle(data.dimension, pos, owner, revival);
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, x: pos.x+i});
       if(block.below().typeId == "minecraft:air") break;
       if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, x:pos.x+i})}).length == 0){
-        lib.explode_particle(data.dimension, {...pos, x: pos.x+i});
+        lib.explode_particle(data.dimension, {...pos, x: pos.x+i}, owner, revival);
       }
       else{
         if(blue && (breakable_block.includes(block.typeId) || through_block.includes(block.typeId))){
-          lib.explode_block(data.dimension, {...pos, x: pos.x+i});
+          lib.explode_block(data.dimension, {...pos, x: pos.x+i}, owner, revival);
         }else{
-          lib.explode_block(data.dimension, {...pos, x: pos.x+i});
+          lib.explode_block(data.dimension, {...pos, x: pos.x+i}, owner, revival);
           break;
         }
       }
@@ -705,13 +769,13 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
       let block = data.dimension.getBlock({...pos, x: pos.x-i});
       if(block.below().typeId == "minecraft:air") break;
       if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, x:pos.x-i})}).length == 0){
-        lib.explode_particle(data.dimension, {...pos, x: pos.x-i});
+        lib.explode_particle(data.dimension, {...pos, x: pos.x-i}, owner, revival);
       }
       else{
         if(blue && (breakable_block.includes(block.typeId) || through_block.includes(block.typeId))){
-          lib.explode_block(data.dimension, {...pos, x: pos.x-i});
+          lib.explode_block(data.dimension, {...pos, x: pos.x-i}, owner, revival);
         }else{
-          lib.explode_block(data.dimension, {...pos, x: pos.x-i});
+          lib.explode_block(data.dimension, {...pos, x: pos.x-i}, owner, revival);
           break;
         }
       }
@@ -721,13 +785,13 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
       let block = data.dimension.getBlock({...pos, z: pos.z+i});
       if(block.below().typeId == "minecraft:air") break;
       if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, z:pos.z+i})}).length == 0){
-        lib.explode_particle(data.dimension, {...pos, z: pos.z+i});
+        lib.explode_particle(data.dimension, {...pos, z: pos.z+i}, owner, revival);
       }
       else{
         if(blue && (breakable_block.includes(block.typeId) || through_block.includes(block.typeId))){
-          lib.explode_block(data.dimension, {...pos, z: pos.z+i});
+          lib.explode_block(data.dimension, {...pos, z: pos.z+i}, owner, revival);
         }else{
-          lib.explode_block(data.dimension, {...pos, z: pos.z+i});
+          lib.explode_block(data.dimension, {...pos, z: pos.z+i}, owner, revival);
           break;
         }
       }
@@ -737,13 +801,13 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
       let block = data.dimension.getBlock({...pos, z: pos.z-i});
       if(block.below().typeId == "minecraft:air") break;
       if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, z:pos.z-i})}).length == 0){
-        lib.explode_particle(data.dimension, {...pos, z: pos.z-i});
+        lib.explode_particle(data.dimension, {...pos, z: pos.z-i}, owner, revival);
       }
       else{
         if(blue && (breakable_block.includes(block.typeId) || through_block.includes(block.typeId))){
-          lib.explode_block(data.dimension, {...pos, z: pos.z-i});
+          lib.explode_block(data.dimension, {...pos, z: pos.z-i}, owner, revival);
         }else{
-          lib.explode_block(data.dimension, {...pos, z: pos.z-i});
+          lib.explode_block(data.dimension, {...pos, z: pos.z-i}, owner, revival);
           break;
         }
       }
@@ -753,10 +817,10 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
       let block = data.dimension.getBlock({...pos, y: pos.y-i});
       if(block.below().typeId == "minecraft:air") break;
       if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, y:pos.y-i})}).length == 0){
-        lib.explode_particle(data.dimension, {...pos, y: pos.y-i});
+        lib.explode_particle(data.dimension, {...pos, y: pos.y-i}, owner, revival);
       }
       else{
-        lib.explode_block(data.dimension, {...pos, y: pos.y-i});
+        lib.explode_block(data.dimension, {...pos, y: pos.y-i}, owner, revival);
         break;
       }
     }
@@ -768,7 +832,7 @@ mc.world.afterEvents.itemUse.subscribe(data=>{
   let {source, itemStack} = data;
   if(data.source.getGameMode() != mc.GameMode.adventure) return;
   if(itemStack.typeId != "minecraft:tnt") return;
-  if(source.getDynamicProperty("bomb") != undefined && source.getDynamicProperty("bomb") >= mc.world.scoreboard.getObjective("bomb").lib.getScore(source)) return;
+  if(source.getDynamicProperty("bomb") != undefined && source.getDynamicProperty("bomb") >= lib.getScore(source, "bomb")) return;
   if(source.dimension.getEntities({location: source.location, maxDistance:0.5, type:"altivelis:tnt"}).length > 0) return;
   let pos = source.location;
   // mc.world.sendMessage(`x: ${Math.floor(pos.x)}, y: ${Math.floor(pos.y)}, z: ${Math.floor(pos.z)}`);
@@ -778,7 +842,7 @@ mc.world.afterEvents.itemUse.subscribe(data=>{
     tnt.addTag("blue");
   }
   tnt.owner = source;
-  tnt.setDynamicProperty("power", mc.world.scoreboard.getObjective("power").lib.getScore(source));
+  tnt.setDynamicProperty("power", lib.getScore(source, "power"));
   if(source.getDynamicProperty("bomb") == undefined) source.setDynamicProperty("bomb", 1);
   else source.setDynamicProperty("bomb", source.getDynamicProperty("bomb")+1);
 })
@@ -788,7 +852,7 @@ mc.world.afterEvents.playerButtonInput.subscribe(data=>{
   if(mc.world.getDynamicProperty("status") != 2) return;
   let player = data.player;
   if(player.hasTag("dead")) return;
-  if(player.getDynamicProperty("bomb") != undefined && player.getDynamicProperty("bomb") >= mc.world.scoreboard.getObjective("bomb").lib.getScore(player)) return;
+  if(player.getDynamicProperty("bomb") != undefined && player.getDynamicProperty("bomb") >= lib.getScore(player, "bomb")) return;
   if(player.dimension.getEntities({location: player.location, maxDistance:0.5, type:"altivelis:tnt"}).length > 0) return;
   let pos = player.location;
   let tnt = player.dimension.spawnEntity("altivelis:tnt", {x: Math.floor(pos.x)+0.5, y: Math.floor(pos.y), z: Math.floor(pos.z)+0.5});
@@ -797,7 +861,7 @@ mc.world.afterEvents.playerButtonInput.subscribe(data=>{
     tnt.addTag("blue");
   }
   tnt.owner = player;
-  tnt.setDynamicProperty("power", mc.world.scoreboard.getObjective("power").lib.getScore(player));
+  tnt.setDynamicProperty("power", lib.getScore(player, "power"));
   tnt.dimension.playSound("fire.ignite", tnt.location, {volume: 10});
   if(player.getDynamicProperty("bomb") == undefined) player.setDynamicProperty("bomb", 1);
   else player.setDynamicProperty("bomb", player.getDynamicProperty("bomb")+1);
@@ -808,12 +872,13 @@ mc.world.afterEvents.playerSpawn.subscribe(data=>{
   if(!data.initialSpawn) return;
   if(data.player.hasTag("player")) data.player.removeTag("player");
   if(data.player.hasTag("dead")) data.player.removeTag("dead");
+  if(data.player.hasTag("kick")) data.player.removeTag("kick");
+  if(data.player.hasTag("punch")) data.player.removeTag("punch");
   data.player.setDynamicProperty("bomb", 0);
   data.player.teleport(roby, {rotation: {x:0, y:0}});
   /** @type {Number} */
   let index = mc.world.getDynamicProperty("stage");
   if(mc.world.getDynamicProperty("status") > 0) {
-    data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, false);
     data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, false);
     data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, false);
     data.player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);

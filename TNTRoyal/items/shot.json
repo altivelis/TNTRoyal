@@ -8,24 +8,24 @@
       }  
     },  
     "components": {
-      "minecraft:max_stack_size": 1,  
-      "minecraft:icon": {  
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": {
         "textures": {
           "default": "tntr:shot"
         }
       },
-      "minecraft:display_name": {  
-        "value": "TNTショット"  
+      "minecraft:display_name": {
+        "value": "TNTショット"
       },
-      "minecraft:cooldown": {  
-        "category": "shot",  
-        "duration": 0.2
+      "minecraft:cooldown": {
+        "category": "shot",
+        "duration": 2.5
       },
       "minecraft:use_modifiers": {
         "use_duration": 1.6
       },
       "minecraft:glint": true,
-      "minecraft:interact_button" : "TNTを投げ飛ばす",
+      "minecraft:interact_button" : "TNTを投げる",
       "minecraft:rarity": "epic",
       "minecraft:custom_components": [
         "tntr:shot"
