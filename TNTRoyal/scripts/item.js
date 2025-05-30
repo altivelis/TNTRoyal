@@ -21,6 +21,7 @@ mc.world.beforeEvents.worldInitialize.subscribe(ev=>{
             for(let i=1; i<=4; i++) {
               data.source.dimension.spawnParticle("tntr:explosion", {...pos, y: pos.y + i, z: pos.z + i}, knockbackColor);
             }
+            e.setDynamicProperty("direction", 0);
           })
           break;
         case 1:
@@ -30,6 +31,7 @@ mc.world.beforeEvents.worldInitialize.subscribe(ev=>{
             for(let i=1; i<=4; i++) {
               data.source.dimension.spawnParticle("tntr:explosion", {...pos, x: pos.x - i, y: pos.y + i}, knockbackColor);
             }
+            e.setDynamicProperty("direction", 1);
           })
           break;
         case 2:
@@ -39,6 +41,7 @@ mc.world.beforeEvents.worldInitialize.subscribe(ev=>{
             for(let i=1; i<=4; i++) {
               data.source.dimension.spawnParticle("tntr:explosion", {...pos, y: pos.y + i, z: pos.z - i}, knockbackColor);
             }
+            e.setDynamicProperty("direction", 2);
           })
           break;
         case 3:
@@ -48,6 +51,7 @@ mc.world.beforeEvents.worldInitialize.subscribe(ev=>{
             for(let i=1; i<=4; i++) {
               data.source.dimension.spawnParticle("tntr:explosion", {...pos, x: pos.x + i, y: pos.y + i}, knockbackColor);
             }
+            e.setDynamicProperty("direction", 3);
           })
           break;
       }
@@ -71,24 +75,28 @@ mc.world.beforeEvents.worldInitialize.subscribe(ev=>{
           data.source.dimension.spawnParticle("tntr:explosion", {x:pos.x+i, y:pos.y+1, z:pos.z}, knockbackColor);
         }
         tnt = data.source.dimension.spawnEntity("altivelis:tnt", {x:pos.x+3, y:pos.y+1, z:pos.z});
+        tnt.setDynamicProperty("direction", 3);
       }
       else if(data.source.location.x > stage[stageIndex].area.end.x+1){
         for(let i=1; i<=3; i++) {
           data.source.dimension.spawnParticle("tntr:explosion", {x:pos.x-i, y:pos.y+1, z:pos.z}, knockbackColor);
         }
         tnt = data.source.dimension.spawnEntity("altivelis:tnt", {x:pos.x-3, y:pos.y+1, z:pos.z});
+        tnt.setDynamicProperty("direction", 1);
       }
       else if(data.source.location.z < stage[stageIndex].area.start.z){
         for(let i=1; i<=3; i++) {
           data.source.dimension.spawnParticle("tntr:explosion", {x:pos.x, y:pos.y+1, z:pos.z+i}, knockbackColor);
         }
         tnt = data.source.dimension.spawnEntity("altivelis:tnt", {x:pos.x, y:pos.y+1, z:pos.z+3});
+        tnt.setDynamicProperty("direction", 0);
       }
       else if(data.source.location.z > stage[stageIndex].area.end.z+1){
         for(let i=1; i<=3; i++) {
           data.source.dimension.spawnParticle("tntr:explosion", {x:pos.x, y:pos.y+1, z:pos.z-i}, knockbackColor);
         }
         tnt = data.source.dimension.spawnEntity("altivelis:tnt", {x:pos.x, y:pos.y+1, z:pos.z-3});
+        tnt.setDynamicProperty("direction", 2);
       }
 
       tnt.setDynamicProperty("power", 2);

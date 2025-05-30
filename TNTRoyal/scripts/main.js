@@ -18,31 +18,7 @@ let pressure_rate = 5;
 mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
   if(data.id == "tnt:init"){
     mc.world.setDynamicProperty("stage", 0);
-    mc.world.setDynamicProperty("status", 0);
-  }
-  if(data.id == "tnt:set_camera"){
-    /** @type {number}*/
-    let index = mc.world.getDynamicProperty("stage");
-    let center = lib.getCenter(stage[index].area);
-    data.sourceEntity.camera.setCamera("minecraft:free", {location: {...center, y:center.y+12, z:center.z-3}, facingLocation: center})
-    data.sourceEntity.teleport(data.sourceEntity.location, {rotation: {x:0, y:0}});
-    data.sourceEntity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, false);
-  }
-  if(data.id == "tnt:clear_camera"){
-    data.sourceEntity.camera.clear();
-    data.sourceEntity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, true);
-  }
-  if(data.id == "tnt:set_permission"){
-    if(data.sourceEntity instanceof mc.Player){
-      data.sourceEntity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, false);
-      data.sourceEntity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, false);
-    }
-  }
-  if(data.id == "tnt:clear_permission"){
-    if(data.sourceEntity instanceof mc.Player){
-      data.sourceEntity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, true);
-      data.sourceEntity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, true);
-    }
+    mc.world.setDynamicProperty("time", 180);
   }
   if(data.id == "tnt:reset"){
     mc.world.getPlayers().forEach(player=>{
@@ -78,7 +54,10 @@ mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
     mc.world.setDynamicProperty("stage", 0);
   }
   if(data.id == "tnt:test") {
-    mc.world.structureManager.place("village", data.sourceEntity.dimension, data.sourceEntity.location);
+    mc.world.playMusic("record.precipice", {fade: 1, loop: true, volume: 100000});
+  }
+  if(data.id == "tnt:test2") {
+    mc.world.stopMusic();
   }
 })
 
@@ -417,17 +396,17 @@ mc.system.runInterval(()=>{
   })
 
   //TNT移動
-  mc.world.getDimension("overworld").getEntities({type: "altivelis:tnt"}).filter(e=>{return e.getDynamicProperty("direction") != undefined}).forEach(tnt=>{
+  mc.world.getDimension("overworld").getEntities({type: "altivelis:tnt"}).filter(e=>{return e.getDynamicProperty("kickOwnerId") != undefined}).forEach(tnt=>{
     let owner = mc.world.getPlayers().filter(e=>{return e.id == tnt.getDynamicProperty("kickOwnerId")})[0];
     let dir = tnt.getDynamicProperty("direction");
     if(
       (owner.inputInfo.getButtonState(mc.InputButton.Sneak) == mc.ButtonState.Pressed) ||
       (!lib.tryTeleport(tnt.dimension, {...tnt.location, x:tnt.location.x+(dir==1?-1:dir==3?1:0), z:tnt.location.z+(dir==0?1:dir==2?-1:0)})) ||
-      (players.filter(e=>{return lib.compLocation(e.location, {...tnt.location, x:tnt.location.x+(dir==1?-1:dir==3?1:0), z:tnt.location.z+(dir==0?1:dir==2?-1:0)})}).length > 0)
+      (players.filter(e=>{return lib.compLocation(e.location, {...tnt.location, x:tnt.location.x+(dir==1?-1:dir==3?1:0), z:tnt.location.z+(dir==0?1:dir==2?-1:0)})}).length > 0) ||
+      (tnt.dimension.getBlock(tnt.location).below().typeId == "minecraft:air")
     ) {
       tnt.teleport({x:Math.floor(tnt.location.x)+0.5, y:Math.floor(tnt.location.y), z:Math.floor(tnt.location.z)+0.5});
       tnt.clearVelocity();
-      tnt.setDynamicProperty("direction");
       tnt.setDynamicProperty("kickOwnerId");
     }
     let speed = 0.4;
@@ -451,6 +430,66 @@ mc.system.runInterval(()=>{
         break;
     }
   })
+  //TNTがプレイヤーやTNTの上にある場合
+  mc.world.getDimension("overworld").getEntities({type: "altivelis:tnt", excludeTags:["moved"]}).filter(e=>{
+    return e.dimension.getBlock(e.location).below().typeId=="minecraft:air"
+  }).forEach(tnt=>{
+    let players = mc.world.getPlayers().filter(e=>{return lib.compLocation({...tnt.location, y:tnt.location.y-1}, e.location)});
+    if(players.length > 0) {
+      players.forEach(player=>{
+        if(!player.hasTag("dead")) {
+          player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
+          lib.myTimeout(20, ()=>{
+            player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, true);
+          })
+        }
+      })
+    }
+    let belowEntity = tnt.dimension.getEntities({excludeTypes:["minecraft:player","altivelis:marker"]}).filter(e=>{return lib.compLocation({...tnt.location, y:tnt.location.y-1}, e.location)});
+    if(players.length > 0 || belowEntity.length > 0) {
+      let particleColor = new mc.MolangVariableMap();
+      particleColor.setColorRGB("variable.color", {red: 1, green: 0, blue: 0});
+      tnt.dimension.spawnParticle("tntr:explosion", tnt.location, particleColor);
+      switch(tnt.getDynamicProperty("direction")){
+        case 0:
+          tnt.teleport({...tnt.location, z:tnt.location.z+1});
+          break;
+        case 1:
+          tnt.teleport({...tnt.location, x:tnt.location.x-1});
+          break;
+        case 2:
+          tnt.teleport({...tnt.location, z:tnt.location.z-1});
+          break;
+        case 3:
+          tnt.teleport({...tnt.location, x:tnt.location.x+1});
+          break;
+        default:
+          switch(Math.floor(Math.random() * 4)){
+            case 0:
+              tnt.teleport({...tnt.location, z:tnt.location.z+1});
+              tnt.setDynamicProperty("direction", 0);
+              break;
+            case 1:
+              tnt.teleport({...tnt.location, x:tnt.location.x-1});
+              tnt.setDynamicProperty("direction", 1);
+              break;
+            case 2:
+              tnt.teleport({...tnt.location, z:tnt.location.z-1});
+              tnt.setDynamicProperty("direction", 2);
+              break;
+            case 3:
+              tnt.teleport({...tnt.location, x:tnt.location.x+1});
+              tnt.setDynamicProperty("direction", 3);
+              break;
+          }
+      }
+      tnt.dimension.playSound("random.pop2", tnt.location, {volume: 10});
+      tnt.addTag("moved");
+      lib.myTimeout(4, ()=>{
+        tnt.removeTag("moved");
+      })
+    }
+  })
 
   //ゲーム中のループ処理
   if(mc.world.getDynamicProperty("status") == 2) {
@@ -469,9 +508,9 @@ mc.system.runInterval(()=>{
         })
       }
       if(time == 60) {
+        mc.world.sendMessage("§c金床が降り始めます");
         mc.world.getPlayers().forEach(player=>{
           player.onScreenDisplay.setTitle("§l§c残り1分", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 10});
-          mc.world.sendMessage("§c金床が降り始めます");
           if(player.hasTag("dead")) {
             player.teleport(roby);
             player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
@@ -543,6 +582,32 @@ mc.system.runInterval(()=>{
         }
       }
     })
+
+    //ステージ外のTNT
+    let particleColor = new mc.MolangVariableMap();
+    particleColor.setColorRGB("variable.color", {red: 1, green: 0, blue: 0});
+    mc.world.getDimension("overworld").getEntities({type:"altivelis:tnt"}).forEach(tnt=>{
+      if(tnt.location.x < stage[stageIndex].area.start.x) {
+        tnt.teleport({...tnt.location, x: stage[stageIndex].area.end.x+0.5});
+        tnt.dimension.spawnParticle("tntr:explosion", {...tnt.location, x:tnt.location.x-1}, particleColor);
+        tnt.setDynamicProperty("direction", 1);
+      }
+      if(tnt.location.x > stage[stageIndex].area.end.x+1) {
+        tnt.teleport({...tnt.location, x: stage[stageIndex].area.start.x+0.5});
+        tnt.dimension.spawnParticle("tntr:explosion", {...tnt.location, x:tnt.location.x+1}, particleColor);
+        tnt.setDynamicProperty("direction", 3);
+      }
+      if(tnt.location.z < stage[stageIndex].area.start.z) {
+        tnt.teleport({...tnt.location, z: stage[stageIndex].area.end.z+0.5});
+        tnt.dimension.spawnParticle("tntr:explosion", {...tnt.location, z:tnt.location.z-1}, particleColor);
+        tnt.setDynamicProperty("direction", 2);
+      }
+      if(tnt.location.z > stage[stageIndex].area.end.z+1) {
+        tnt.teleport({...tnt.location, z: stage[stageIndex].area.start.z+0.5});
+        tnt.dimension.spawnParticle("tntr:explosion", {...tnt.location, z:tnt.location.z+1}, particleColor);
+        tnt.setDynamicProperty("direction", 0);
+      }
+    })
   }
 })
 
@@ -591,7 +656,7 @@ export function startGame(){
     player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, false);
     player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
   })
-  lib.setScore("残り時間", "display", 120);
+  lib.setScore("残り時間", "display", mc.world.getDynamicProperty("time"));
   tick = 0;
   lib.myTimeout(20, ()=>{
     //プレイヤーをテレポート
@@ -636,8 +701,9 @@ export function startGame(){
       player.runCommand(`camera @s set minecraft:free pos ${center.x} ${center.y+12} ${center.z-3} facing ${center.x} ${center.y} ${center.z}`);
       player.runCommand("controlscheme @s set camera_relative");
       player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
-      // player.playMusic("record.precipice", {fade: 1, loop: true, volume: 0.3});
-      player.runCommand("music play record.precipice 0.3 1 loop");
+    })
+    lib.myTimeout(1, ()=>{
+      mc.world.playMusic("record.precipice", {fade: 1, loop: true, volume: 0.5});
     })
 
     lib.myTimeout(20, ()=>{
@@ -678,7 +744,7 @@ function endGame(){
   mc.world.setDynamicProperty("status", 3);
   let winner = mc.world.getPlayers({tags:["player"], excludeTags:["dead", "spectator"]});
   if(winner.length == 1) {
-    winner[0].runCommand("controlscheme @s clear");
+    winner[0].runCommand("controlscheme @a clear");
     lib.myTimeout(1, ()=>{
       winner[0].teleport(winner[0].location, {facingLocation: {...winner[0].location, y: winner[0].location.y+5, z: winner[0].location.z-2}});
     })
@@ -686,7 +752,9 @@ function endGame(){
     mc.world.sendMessage(`${winner[0].nameTag}の勝利!`);
     mc.world.getPlayers().forEach(player=>{
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
-      player.camera.setCamera("minecraft:free", {location: {...winner[0].location, y:winner[0].location.y+5, z:winner[0].location.z-1}, facingLocation: winner[0].location, easeOptions: {easeTime:1, easeType: mc.EasingType.OutCirc}});
+      lib.myTimeout(1, ()=>{
+        player.camera.setCamera("minecraft:free", {location: {...winner[0].location, y:winner[0].location.y+5, z:winner[0].location.z-1}, facingLocation: winner[0].location, easeOptions: {easeTime:1, easeType: mc.EasingType.OutCirc}});
+      })
       player.onScreenDisplay.setTitle("§l§bWINNER\n\n\n", {fadeInDuration: 0, stayDuration: 50, fadeOutDuration: 10});
       player.onScreenDisplay.updateSubtitle(winner[0].nameTag)
     })    
@@ -703,6 +771,8 @@ function endGame(){
       player.removeTag("dead");
       player.removeTag("kick");
       player.removeTag("punch");
+      player.removeTag("tp");
+      player.removeTag("revival");
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, true);
@@ -714,11 +784,11 @@ function endGame(){
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
       player.camera.clear();
       player.teleport(roby, {rotation: {x:0, y:0}});
-      player.stopMusic();
       player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Reset, [mc.HudElement.Health, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
       let moveComp = player.getComponent(mc.EntityMovementComponent.componentId);
       moveComp.resetToDefaultValue();
     })
+    mc.world.stopMusic();
     mc.world.getDimension("overworld").getEntities({type: "altivelis:marker"}).forEach(entity=>{
       entity.remove();
     })
@@ -874,6 +944,8 @@ mc.world.afterEvents.playerSpawn.subscribe(data=>{
   if(data.player.hasTag("dead")) data.player.removeTag("dead");
   if(data.player.hasTag("kick")) data.player.removeTag("kick");
   if(data.player.hasTag("punch")) data.player.removeTag("punch");
+  if(data.player.hasTag("tp")) data.player.removeTag("tp");
+  if(data.player.hasTag("revival")) data.player.removeTag("revival");
   data.player.setDynamicProperty("bomb", 0);
   data.player.teleport(roby, {rotation: {x:0, y:0}});
   /** @type {Number} */
@@ -885,6 +957,5 @@ mc.world.afterEvents.playerSpawn.subscribe(data=>{
     let center = lib.getCenter(stage[index].area);
     data.player.camera.setCamera("minecraft:free", {location: {...center, y:center.y+12, z:center.z-3}, facingLocation: center});
     data.player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Hide, [mc.HudElement.Health, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
-    data.player.playMusic("record.precipice", {fade: 1, loop: true, volume: 0.3});
   }
 })
