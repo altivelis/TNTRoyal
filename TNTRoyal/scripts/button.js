@@ -1,6 +1,6 @@
 import * as mc from "@minecraft/server";
 import { startGame } from "./main";
-import { openRoleSelect, openStageSelect } from "./menu";
+import { openRoleSelect, openSettingMenu, openStageSelect, openWorldDescription } from "./menu";
 
 mc.world.beforeEvents.playerInteractWithBlock.subscribe(data=>{
   let {isFirstEvent, block, player} = data;
@@ -38,6 +38,20 @@ mc.world.beforeEvents.playerInteractWithBlock.subscribe(data=>{
     data.cancel = true;
     mc.system.run(()=>{
       openRoleSelect(player);
+    })
+  }
+  if(`${block.location.x} ${block.location.y} ${block.location.z}` == "-3 -58 8") {
+    //設定メニューボタン
+    data.cancel = true;
+    mc.system.run(()=>{
+      openSettingMenu(player);
+    })
+  }
+  if(`${block.location.x} ${block.location.y} ${block.location.z}` == "-1 -59 3") {
+    //ワールド説明メニュー
+    data.cancel = true;
+    mc.system.run(()=>{
+      openWorldDescription(player);
     })
   }
 })

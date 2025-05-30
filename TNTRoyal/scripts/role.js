@@ -9,6 +9,7 @@ import * as mc from "@minecraft/server";
  * @property {{init:Boolean, able:Boolean}} blue - The blue properties.
  * @property {{init:Boolean, able:Boolean}} kick - The kick properties.
  * @property {{init:Boolean, able:Boolean}} punch - The punch properties.
+ * @property {string|undefined} icon - The icon of the role, if any.
  */
 export const roleList = [
   {
@@ -19,6 +20,7 @@ export const roleList = [
     blue: {init: false, able: true},
     kick: {init: false, able: true},
     punch: {init: false, able: true},
+    icon: undefined,
   },
   {
     name: "ゾンビ",
@@ -28,6 +30,7 @@ export const roleList = [
     blue: {init: false, able: true},
     kick: {init: false, able: false},
     punch: {init: true, able: true},
+    icon: "textures/items/spawn_eggs/spawn_egg_zombie.png",
   },
   {
     name: "クリーパー",
@@ -37,6 +40,7 @@ export const roleList = [
     blue: {init: false, able: true},
     kick: {init: false, able: true},
     punch: {init: false, able: false},
+    icon: "textures/items/spawn_eggs/spawn_egg_creeper.png",
   },
   {
     name: "スケルトン",
@@ -46,6 +50,7 @@ export const roleList = [
     blue: {init: true, able: true},
     kick: {init: false, able: false},
     punch: {init: false, able: true},
+    icon: "textures/items/spawn_eggs/spawn_egg_skeleton.png",
   },
   {
     name: "ウィザースケルトン",
@@ -55,6 +60,7 @@ export const roleList = [
     blue: {init: false, able: true},
     kick: {init: false, able: true},
     punch: {init: false, able: true},
+    icon: "textures/items/spawn_eggs/spawn_egg_wither_skeleton.png",
   },
   {
     name: "ウィザー",
@@ -64,6 +70,7 @@ export const roleList = [
     blue: {init: false, able: true},
     kick: {init: false, able: true},
     punch: {init: false, able: false},
+    icon: "textures/items/spawn_eggs/spawn_egg_wither.png",
   },
   {
     name: "アイアンゴーレム",
@@ -73,5 +80,6 @@ export const roleList = [
     blue: {init: true, able: true},
     kick: {init: false, able: false},
     punch: {init: true, able: true},
+    icon: "textures/items/spawn_eggs/spawn_egg_iron_golem.png",
   }
 ]
