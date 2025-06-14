@@ -98,10 +98,11 @@ mc.world.beforeEvents.worldInitialize.subscribe(ev=>{
         tnt = data.source.dimension.spawnEntity("altivelis:tnt", {x:pos.x, y:pos.y+1, z:pos.z-3});
         tnt.setDynamicProperty("direction", 2);
       }
-
-      tnt.setDynamicProperty("power", 2);
-      tnt.addTag("revival");
-      tnt.owner = data.source;
+      if(tnt) {
+        tnt.setDynamicProperty("power", 2);
+        tnt.addTag("revival");
+        tnt.owner = data.source;
+      }
     }
   })
 })

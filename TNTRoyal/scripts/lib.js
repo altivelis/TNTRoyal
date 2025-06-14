@@ -238,6 +238,7 @@ export function clearField(dimension, start, end) {
  * @param {string} stageInfo.block
  */
 export function setField(dimension, stageInfo) {
+  mc.world.structureManager.place(stageInfo.name, dimension, stageInfo.pivot);
   clearField(dimension, stageInfo.area.start, stageInfo.area.end);
   mc.world.structureManager.place(stageInfo.name, dimension, stageInfo.pivot, {integrity: 0.9});
 }

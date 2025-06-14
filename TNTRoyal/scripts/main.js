@@ -408,6 +408,7 @@ mc.system.runInterval(()=>{
       tnt.teleport({x:Math.floor(tnt.location.x)+0.5, y:Math.floor(tnt.location.y), z:Math.floor(tnt.location.z)+0.5});
       tnt.clearVelocity();
       tnt.setDynamicProperty("kickOwnerId");
+      return;
     }
     let speed = 0.4;
     tnt.clearVelocity();
@@ -490,6 +491,9 @@ mc.system.runInterval(()=>{
       })
     }
   })
+  mc.world.getDimension("overworld").getEntities({type: "altivelis:tnt"}).filter(e=>{return e.dimension.getBlock(e.location).below().typeId == "minecraft:barrier"}).forEach(tnt=>{
+    tnt.teleport({...tnt.location, y: tnt.location.y-0.5});
+  })
 
   //ゲーム中のループ処理
   if(mc.world.getDynamicProperty("status") == 2) {
@@ -513,6 +517,7 @@ mc.system.runInterval(()=>{
           player.onScreenDisplay.setTitle("§l§c残り1分", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 10});
           if(player.hasTag("dead")) {
             player.teleport(roby);
+            player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
             player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
           }
         })
@@ -545,7 +550,7 @@ mc.system.runInterval(()=>{
     })
     //ミソボン
     mc.world.getPlayers({tags:["player", "dead"], excludeTags:["spectator"]}).forEach(player=>{
-      if(player.location.z > stage[stageIndex].area.end.z+1 || (player.location.x > stage[stageIndex].area.start.x && player.location.x < stage[stageIndex].area.end.x+1)) {
+      if(player.location.z > stage[stageIndex].area.end.z+1 || (player.location.z < stage[stageIndex].area.start.z && player.location.x > stage[stageIndex].area.start.x-0.2 && player.location.x < stage[stageIndex].area.end.x+1.2)) {
         if(player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveForward)) {
           player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, false);
         }
@@ -554,7 +559,7 @@ mc.system.runInterval(()=>{
           player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, true);
         }
       }
-      if(player.location.z < stage[stageIndex].area.start.z || (player.location.x > stage[stageIndex].area.start.x && player.location.x < stage[stageIndex].area.end.x+1)) {
+      if(player.location.z < stage[stageIndex].area.start.z-0.2 || (player.location.z > stage[stageIndex].area.end.z+1 && player.location.x > stage[stageIndex].area.start.x-0.2 && player.location.x < stage[stageIndex].area.end.x+1.2)) {
         if(player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveBackward)) {
           player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, false);
         }
@@ -563,7 +568,7 @@ mc.system.runInterval(()=>{
           player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, true);
         }
       }
-      if(player.location.x > stage[stageIndex].area.end.x+1 || (player.location.z > stage[stageIndex].area.start.z && player.location.z < stage[stageIndex].area.end.z+1)) {
+      if(player.location.x > stage[stageIndex].area.end.x+1.2 || (player.location.x < stage[stageIndex].area.start.x && player.location.z > stage[stageIndex].area.start.z && player.location.z < stage[stageIndex].area.end.z+1)) {
         if(player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveLeft)) {
           player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, false);
         }
@@ -572,13 +577,48 @@ mc.system.runInterval(()=>{
           player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, true);
         }
       }
-      if(player.location.x < stage[stageIndex].area.start.x || (player.location.z > stage[stageIndex].area.start.z && player.location.z < stage[stageIndex].area.end.z+1)) {
+      if(player.location.x < stage[stageIndex].area.start.x-0.2 || (player.location.x > stage[stageIndex].area.end.x+1 && player.location.z > stage[stageIndex].area.start.z && player.location.z < stage[stageIndex].area.end.z+1)) {
         if(player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveRight)) {
           player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, false);
         }
       }else{
         if(!player.inputPermissions.isPermissionCategoryEnabled(mc.InputPermissionCategory.MoveRight)) {
           player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, true);
+        }
+      }
+
+      //ステージ内に入った場合
+      if(lib.getScore("残り時間", "display") > 60 && new mc.BlockVolume(stage[stageIndex].area.start, stage[stageIndex].area.end).isInside(player.location)) {
+        let north = stage[stageIndex].area.end.z+1 - player.location.z;
+        let south = player.location.z - stage[stageIndex].area.start.z;
+        let east = player.location.x - stage[stageIndex].area.start.x;
+        let west = stage[stageIndex].area.end.x+1 - player.location.x;
+        let list = [];
+        if(north > 0) list.push({direction: 0, distance: north});
+        if(south > 0) list.push({direction: 2, distance: south});
+        if(east > 0) list.push({direction: 1, distance: east});
+        if(west > 0) list.push({direction: 3, distance: west});
+        let min = {direction: null, distance: Infinity};
+        list.forEach(e=>{
+          if(e.distance < min.distance) {
+            min = e;
+          }
+        })
+        if(min.direction != null) {
+          switch(min.direction) {
+            case 0:
+              player.teleport({...player.location, y: player.location.y+0.5, z: stage[stageIndex].area.end.z+1.5});
+              break;
+            case 1:
+              player.teleport({...player.location, y: player.location.y+0.5, x: stage[stageIndex].area.start.x-0.5});
+              break;
+            case 2:
+              player.teleport({...player.location, y: player.location.y+0.5, z: stage[stageIndex].area.start.z-0.5});
+              break;
+            case 3:
+              player.teleport({...player.location, y: player.location.y+0.5, x: stage[stageIndex].area.end.x+1.5});
+              break;
+          }
         }
       }
     })
@@ -606,6 +646,22 @@ mc.system.runInterval(()=>{
         tnt.teleport({...tnt.location, z: stage[stageIndex].area.start.z+0.5});
         tnt.dimension.spawnParticle("tntr:explosion", {...tnt.location, z:tnt.location.z+1}, particleColor);
         tnt.setDynamicProperty("direction", 0);
+      }
+    })
+
+    //ステージ外のプレイヤー
+    mc.world.getPlayers({tags:["player"], excludeTags:["dead", "spectator"]}).forEach(player=>{
+      if(player.location.x < stage[stageIndex].area.start.x) {
+        player.teleport({...player.location, x: stage[stageIndex].area.start.x+0.5});
+      }
+      if(player.location.x > stage[stageIndex].area.end.x+1) {
+        player.teleport({...player.location, x: stage[stageIndex].area.end.x+0.5});
+      }
+      if(player.location.z < stage[stageIndex].area.start.z) {
+        player.teleport({...player.location, z: stage[stageIndex].area.start.z+0.5});
+      }
+      if(player.location.z > stage[stageIndex].area.end.z+1) {
+        player.teleport({...player.location, z: stage[stageIndex].area.end.z+0.5});
       }
     })
   }
