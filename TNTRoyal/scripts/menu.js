@@ -39,7 +39,7 @@ export function openStageSelect(player) {
   menu_stage.title("ステージ選択")
     .body("ステージを選択してください");
   stage.forEach(s=>{
-    menu_stage.button(s.name);
+    menu_stage.button(s.name, s.icon);
   })
   menu_stage.show(player).then(res=>{
     if(res.canceled) return;
