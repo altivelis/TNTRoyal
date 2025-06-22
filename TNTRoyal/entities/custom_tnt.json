@@ -52,6 +52,13 @@
       "minecraft:is_collidable": {},
       "minecraft:knockback_resistance": {
         "value": 1.0
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "deals_damage": "no"
+          }
+        ]
       }
     },
     
