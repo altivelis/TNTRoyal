@@ -2,7 +2,7 @@ import * as mc from "@minecraft/server";
 import * as lib from "./lib";
 import {stage} from "./const";
 
-mc.world.beforeEvents.worldInitialize.subscribe(ev=>{
+mc.system.beforeEvents.startup.subscribe(ev=>{
   ev.itemComponentRegistry.registerCustomComponent("tntr:punch", {
     onUse: data=>{
       data.source.startItemCooldown("punch", 4);

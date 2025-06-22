@@ -6,7 +6,7 @@
     "size": [ "100%c + 12px", "100%c + 5px" ],
     "offset": [ 0, 0 ],
     "anchor_from": "right_middle",
-    "anchor_to": "right_middle",
+    "anchor_to": "top_right",
     "texture": "textures/ui/hud_tip_text_background",
     "alpha": "@hud.anim_actionbar_text_background_alpha_out",
     "controls": [
@@ -295,6 +295,9 @@
       {
         "hud_title_text_area": {
           "type": "panel",
+          "anchor_from": "center",
+          "anchor_to": "center",
+          "offset": [ 0, "-20%y" ],
           "factory": {
             "name": "hud_title_text_factory",
             "control_ids": {
@@ -344,8 +347,8 @@
       },
       {
         "sidebar@scoreboard.scoreboard_sidebar": {
-          "anchor_from": "top_middle",
-          "anchor_to": "top_middle",
+          "anchor_from": "right_middle",
+          "anchor_to": "bottom_right",
           "offset": [ 0, 0 ],
           "bindings": [
             {

@@ -106,7 +106,7 @@ mc.system.runInterval(()=>{
             }
             //通り道検知
             if(!player.hasTag("tp") && player.dimension.getBlock({...player.location, x: player.location.x+1}).typeId == "minecraft:air") {
-              player.applyKnockback(0, (player.location.z > Math.floor(player.location.z)+0.5) ? -1 : 1, strength, 0);
+              player.applyKnockback({x:0, z:(player.location.z > Math.floor(player.location.z)+0.5) ? -strength : strength}, 0);
               player.addTag("tp");
               lib.myTimeout(delay, ()=>{
                 player.removeTag("tp");
@@ -114,7 +114,7 @@ mc.system.runInterval(()=>{
             }else{
               if(player.location.z > Math.floor(player.location.z) + 1 - size) {
                 if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1})) {
-                  player.applyKnockback(0, 1, strength*2, 0);
+                  player.applyKnockback({x:0, z:strength*2}, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
@@ -122,7 +122,7 @@ mc.system.runInterval(()=>{
                 }
               }else if(player.location.z < Math.floor(player.location.z) + size) {
                 if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1})) {
-                  player.applyKnockback(0, -1, strength*2, 0);
+                  player.applyKnockback({x:0, z:-strength*2}, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
@@ -150,7 +150,7 @@ mc.system.runInterval(()=>{
             }
             //通り道検知
             if(!player.hasTag("tp") && lib.tryTeleport(player.dimension, {...player.location, x: player.location.x-1})) {
-              player.applyKnockback(0, (player.location.z > Math.floor(player.location.z)+0.5) ? -1 : 1, strength, 0);
+              player.applyKnockback({x:0, z:(player.location.z > Math.floor(player.location.z)+0.5) ? -strength : strength}, 0);
               player.addTag("tp");
               lib.myTimeout(delay, ()=>{
                 player.removeTag("tp");
@@ -158,7 +158,7 @@ mc.system.runInterval(()=>{
             }else{
               if(player.location.z > Math.floor(player.location.z) + 1 - size) {
                 if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1})) {
-                  player.applyKnockback(0, 1, strength*2, 0);
+                  player.applyKnockback({x:0, z:strength*2}, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
@@ -166,7 +166,7 @@ mc.system.runInterval(()=>{
                 }
               }else if(player.location.z < Math.floor(player.location.z) + size) {
                 if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1})) {
-                  player.applyKnockback(0, -1, strength*2, 0);
+                  player.applyKnockback({x:0, z:-strength*2}, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
@@ -196,7 +196,7 @@ mc.system.runInterval(()=>{
             }
             //通り道検知
             if(!player.hasTag("tp") && lib.tryTeleport(player.dimension, {...player.location, z: player.location.z+1})) {
-              player.applyKnockback((player.location.x > Math.floor(player.location.x)+0.5) ? -1 : 1, 0, strength, 0);
+              player.applyKnockback({x:(player.location.x > Math.floor(player.location.x)+0.5) ? -strength : strength, z:0}, 0);
               player.addTag("tp");
               lib.myTimeout(delay, ()=>{
                 player.removeTag("tp");
@@ -204,7 +204,7 @@ mc.system.runInterval(()=>{
             }else{
               if(player.location.x > Math.floor(player.location.x) + 1 - size) {
                 if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z+1})) {
-                  player.applyKnockback(1, 0, strength*2, 0);
+                  player.applyKnockback({x:strength*2, z:0}, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
@@ -212,7 +212,7 @@ mc.system.runInterval(()=>{
                 }
               }else if(player.location.x < Math.floor(player.location.x) + size) {
                 if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z+1})) {
-                  player.applyKnockback(-1, 0, strength*2, 0);
+                  player.applyKnockback({x:-strength*2, z:0}, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
@@ -240,7 +240,7 @@ mc.system.runInterval(()=>{
             }
             //通り道検知
             if(!player.hasTag("tp") && lib.tryTeleport(player.dimension, {...player.location, z: player.location.z-1})) {
-              player.applyKnockback((player.location.x > Math.floor(player.location.x)+0.5) ? -1 : 1, 0, strength, 0);
+              player.applyKnockback({x:(player.location.x > Math.floor(player.location.x)+0.5) ? -strength : strength, z:0}, 0);
               player.addTag("tp");
               lib.myTimeout(delay, ()=>{
                 player.removeTag("tp");
@@ -248,7 +248,7 @@ mc.system.runInterval(()=>{
             }else{
               if(player.location.x > Math.floor(player.location.x) + 1 - size) {
                 if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x+1, z: player.location.z-1})) {
-                  player.applyKnockback(1, 0, strength*2, 0);
+                  player.applyKnockback({x:strength*2, z:0}, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
@@ -256,7 +256,7 @@ mc.system.runInterval(()=>{
                 }
               }else if(player.location.x < Math.floor(player.location.x) + size) {
                 if(lib.tryTeleport(player.dimension, {...player.location, x: player.location.x-1, z: player.location.z-1})) {
-                  player.applyKnockback(-1, 0, strength*2, 0);
+                  player.applyKnockback({x:-strength*2, z:0}, 0);
                   player.addTag("tp");
                   lib.myTimeout(delay, ()=>{
                     player.removeTag("tp");
@@ -514,7 +514,7 @@ mc.system.runInterval(()=>{
       if(time == 60) {
         mc.world.sendMessage("§c金床が降り始めます");
         mc.world.getPlayers().forEach(player=>{
-          player.onScreenDisplay.setTitle("§l§c残り1分", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 10});
+          player.onScreenDisplay.setTitle("§c残り1分", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 10});
           if(player.hasTag("dead")) {
             player.teleport(roby);
             player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
@@ -765,23 +765,23 @@ export function startGame(){
     lib.myTimeout(20, ()=>{
       lib.myTimeout(20, ()=>{
         mc.world.getPlayers().forEach(player=>{
-          player.onScreenDisplay.setTitle("§l§a3", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
+          player.onScreenDisplay.setTitle("§a3", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
           player.playSound("random.click", {location: player.location, volume: 10});
         })
         lib.myTimeout(20, ()=>{
           mc.world.getPlayers().forEach(player=>{
-            player.onScreenDisplay.setTitle("§l§a2", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
+            player.onScreenDisplay.setTitle("§a2", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
             player.playSound("random.click", {location: player.location, volume: 10});
           })
           lib.myTimeout(20, ()=>{
             mc.world.getPlayers().forEach(player=>{
-              player.onScreenDisplay.setTitle("§l§a1", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
+              player.onScreenDisplay.setTitle("§a1", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
               player.playSound("random.click", {location: player.location, volume: 10});
             })
             lib.myTimeout(20, ()=>{
               mc.world.setDynamicProperty("status", 2);
               mc.world.getPlayers().forEach(player=>{
-                player.onScreenDisplay.setTitle("§l§bGO!", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
+                player.onScreenDisplay.setTitle("§bGO!", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 0});
                 player.playSound("mob.wither.spawn", {location: player.location, volume: 10});
               })
               member.forEach(player=>{
@@ -811,14 +811,14 @@ function endGame(){
       lib.myTimeout(1, ()=>{
         player.camera.setCamera("minecraft:free", {location: {...winner[0].location, y:winner[0].location.y+5, z:winner[0].location.z-1}, facingLocation: winner[0].location, easeOptions: {easeTime:1, easeType: mc.EasingType.OutCirc}});
       })
-      player.onScreenDisplay.setTitle("§l§bWINNER\n\n\n", {fadeInDuration: 0, stayDuration: 50, fadeOutDuration: 10});
+      player.onScreenDisplay.setTitle("§bWINNER", {fadeInDuration: 0, stayDuration: 50, fadeOutDuration: 10});
       player.onScreenDisplay.updateSubtitle(winner[0].nameTag)
     })    
   }else{
     mc.world.sendMessage(`§l§7引き分け!`);
     mc.world.getPlayers().forEach(player=>{
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
-      player.onScreenDisplay.setTitle("§l§7DRAW\n\n\n", {fadeInDuration: 0, stayDuration: 50, fadeOutDuration: 10});
+      player.onScreenDisplay.setTitle("§7DRAW", {fadeInDuration: 0, stayDuration: 50, fadeOutDuration: 10});
     })
   }
   lib.myTimeout(60, ()=>{
@@ -956,7 +956,6 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
 //テスト用tnt設置処理
 mc.world.afterEvents.itemUse.subscribe(data=>{
   let {source, itemStack} = data;
-  if(data.source.getGameMode() != mc.GameMode.adventure) return;
   if(itemStack.typeId != "minecraft:tnt") return;
   if(source.getDynamicProperty("bomb") != undefined && source.getDynamicProperty("bomb") >= lib.getScore(source, "bomb")) return;
   if(source.dimension.getEntities({location: source.location, maxDistance:0.5, type:"altivelis:tnt"}).length > 0) return;
