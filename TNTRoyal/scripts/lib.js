@@ -149,8 +149,7 @@ export function explode_particle(dimension, location, owner = undefined, revival
       else {
         /**@type {Number} */
         let stageIndex = mc.world.getDynamicProperty("stage");
-        let center = getCenter(stage[stageIndex].area);
-        entity.teleport({...center, y:center.y+1, z:stage[stageIndex].area.end.z+1.5});
+        entity.teleport(stage[stageIndex].spectator);
         let slot = entity.getComponent(mc.EntityInventoryComponent.componentId).container.getSlot(0);
         slot.setItem(new mc.ItemStack("altivelis:shot"));
         slot.getItem().lockMode = mc.ItemLockMode.slot;
@@ -287,11 +286,11 @@ export function dropItem(player) {
     let random = Math.floor(Math.random()*areas.length);
     let pos = areas[random];
     if(through_block.includes(dimension.getBlock(pos).typeId)){
-      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+0.5, z:pos.z+0.5});
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y, z:pos.z+0.5});
       entity.addTag("bomb");
       areas.splice(random, 1);
     }else{
-      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1.5, z:pos.z+0.5});
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1, z:pos.z+0.5});
       entity.addTag("bomb");
       areas.splice(random, 1);
     }
@@ -301,11 +300,11 @@ export function dropItem(player) {
     let random = Math.floor(Math.random()*areas.length);
     let pos = areas[random];
     if(through_block.includes(dimension.getBlock(pos).typeId)){
-      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+0.5, z:pos.z+0.5});
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y, z:pos.z+0.5});
       entity.addTag("power");
       areas.splice(random, 1);
     }else{
-      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1.5, z:pos.z+0.5});
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1, z:pos.z+0.5});
       entity.addTag("power");
       areas.splice(random, 1);
     }
@@ -315,26 +314,54 @@ export function dropItem(player) {
     let random = Math.floor(Math.random()*areas.length);
     let pos = areas[random];
     if(through_block.includes(dimension.getBlock(pos).typeId)){
-      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+0.5, z:pos.z+0.5});
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y, z:pos.z+0.5});
       entity.addTag("speed");
       areas.splice(random, 1);
     }else{
-      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1.5, z:pos.z+0.5});
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1, z:pos.z+0.5});
       entity.addTag("speed");
       areas.splice(random, 1);
     }
   }
-  if(player.getDynamicProperty("tnt") == 1) {
+  if(player.getDynamicProperty("tnt") == 1 && roleList[player.getDynamicProperty("role")].blue.init == false) {
     if(areas.length == 0) return;
     let random = Math.floor(Math.random()*areas.length);
     let pos = areas[random];
     if(through_block.includes(dimension.getBlock(pos).typeId)){
-      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+0.5, z:pos.z+0.5});
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y, z:pos.z+0.5});
       entity.addTag("blue_tnt");
       areas.splice(random, 1);
     }else{
-      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1.5, z:pos.z+0.5});
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1, z:pos.z+0.5});
       entity.addTag("blue_tnt");
+      areas.splice(random, 1);
+    }
+  }
+  if(player.hasTag("kick") && roleList[player.getDynamicProperty("role")].kick.init == false) {
+    if(areas.length == 0) return;
+    let random = Math.floor(Math.random()*areas.length);
+    let pos = areas[random];
+    if(through_block.includes(dimension.getBlock(pos).typeId)){
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y, z:pos.z+0.5});
+      entity.addTag("kick");
+      areas.splice(random, 1);
+    }else{
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1, z:pos.z+0.5});
+      entity.addTag("kick");
+      areas.splice(random, 1);
+    }
+  }
+  if(player.hasTag("punch") && roleList[player.getDynamicProperty("role")].punch.init == false) {
+    if(areas.length == 0) return;
+    let random = Math.floor(Math.random()*areas.length);
+    let pos = areas[random];
+    if(through_block.includes(dimension.getBlock(pos).typeId)){
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y, z:pos.z+0.5});
+      entity.addTag("punch");
+      areas.splice(random, 1);
+    }else{
+      let entity = dimension.spawnEntity("altivelis:marker", {...pos, x:pos.x+0.5, y:pos.y+1, z:pos.z+0.5});
+      entity.addTag("punch");
       areas.splice(random, 1);
     }
   }
