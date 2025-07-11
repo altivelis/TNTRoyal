@@ -140,7 +140,7 @@ export function openSettingMenu(player) {
     mc.world.sendMessage(
       `§b===ゲーム設定変更===\n` +
       `§e制限時間§r§l: §a${time}秒§r\n` +
-      `§b全員スティーブ§r§l: §a${allSteve ? "ON" : "OFF"}§r\n` +
+      `§e全員スティーブ§r§l: §a${allSteve ? "ON" : "OFF"}§r\n` +
       `§b===================`
     )
   })
