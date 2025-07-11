@@ -89,6 +89,16 @@ mc.system.runInterval(()=>{
       player.setDynamicProperty("role", 0);
     }
 
+    // プレイヤー名にロール名を付加
+    const roleIndex = player.getDynamicProperty("role") || 0;
+    const roleName = roleList[roleIndex].name;
+    const expectedNameTag = `${player.name}\n(${roleName})`;
+    
+    // nameTagが期待する形式でなければ更新
+    if (player.nameTag !== expectedNameTag) {
+      player.nameTag = expectedNameTag;
+    }
+
     //入力方向検知
     let size = 0.2;
     let strength = 0.3;
@@ -555,7 +565,7 @@ mc.system.runInterval(()=>{
             e.dimension.playSound("random.anvil_land", e.location, {volume: 10});
             e.teleport(roby);
             e.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
-            mc.world.sendMessage(`§c${e.nameTag}§rは金床に潰された！`);
+            mc.world.sendMessage(`§c${e.nameTag.replace("\n", "")}§rは金床に潰された！`);
             lib.dropItem(e);
           }
         })
@@ -829,7 +839,7 @@ function endGame(){
       winner[0].teleport(winner[0].location, {facingLocation: {...winner[0].location, y: winner[0].location.y+5, z: winner[0].location.z-2}});
     })
     winner[0].dimension.playSound("random.totem", winner[0].location, {volume: 10});
-    mc.world.sendMessage(`${winner[0].nameTag}の勝利!`);
+    mc.world.sendMessage(`${winner[0].nameTag.replace("\n", "")}の勝利!`);
     mc.world.getPlayers().forEach(player=>{
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
       lib.myTimeout(1, ()=>{

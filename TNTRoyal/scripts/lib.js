@@ -96,13 +96,13 @@ export function explode_particle(dimension, location, owner = undefined, revival
     if(entity instanceof mc.Player && mc.world.getDynamicProperty("status") == 2 && !entity.hasTag("revival") && !entity.hasTag("dead")) {
       entity.addTag("dead");
       entity.dimension.playSound("item.trident.thunder", entity.location, {volume: 10});
-      mc.world.sendMessage(`§c${entity.nameTag}§rは爆発に巻き込まれた！`);
+      mc.world.sendMessage(`§c${entity.nameTag.replace("\n", "")}§rは爆発に巻き込まれた！`);
       //復活
       if(revival && owner != undefined) {
         owner.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
         owner.teleport({x:Math.floor(entity.location.x)+0.5, y:Math.floor(entity.location.y)+0.5, z:Math.floor(entity.location.z)+0.5});
         owner.removeTag("dead");
-        mc.world.sendMessage(`§a${owner.nameTag}§rが復活！！`);
+        mc.world.sendMessage(`§a${owner.nameTag.replace("\n", "")}§rが復活！！`);
         //初期ステータス適用
         /**@type {Number} */
         let roleIndex = owner.getDynamicProperty("role");
