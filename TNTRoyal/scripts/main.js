@@ -741,6 +741,10 @@ export function startGame(){
     }
     //プレイヤー初期化
     member.forEach(player=>{
+      // 「全員スティーブ」設定がONならroleを強制的に0にする
+      if (mc.world.getDynamicProperty("allSteve") === true) {
+        player.setDynamicProperty("role", 0);
+      }
       /**
        * @type {roleList}
        */

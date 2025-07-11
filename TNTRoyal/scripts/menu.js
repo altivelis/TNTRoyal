@@ -118,7 +118,8 @@ let menu_setting;
 mc.world.afterEvents.worldLoad.subscribe(()=>{
   menu_setting = new ui.ModalFormData();
   menu_setting.title("ゲーム設定")
-    .slider("§l§e制限時間", 70, 300, {valueStep: 10, defaultValue: mc.world.getDynamicProperty("time")});
+    .slider("§l§e制限時間", 70, 300, {valueStep: 10, defaultValue: mc.world.getDynamicProperty("time")})
+    .toggle("§l§b全員スティーブ", {defaultValue: mc.world.getDynamicProperty("allSteve") === true, tooltip: "ゲーム開始時に全員スティーブになります。"});
 })
 
 /**
@@ -132,11 +133,14 @@ export function openSettingMenu(player) {
     if(res.canceled) return;
     if(mc.world.getDynamicProperty("status") != 0) return;
     const time = res.formValues[0];
+    const allSteve = res.formValues[1];
     mc.world.setDynamicProperty("time", time);
+    mc.world.setDynamicProperty("allSteve", allSteve);
 
     mc.world.sendMessage(
       `§b===ゲーム設定変更===\n` +
       `§e制限時間§r§l: §a${time}秒§r\n` +
+      `§b全員スティーブ§r§l: §a${allSteve ? "ON" : "OFF"}§r\n` +
       `§b===================`
     )
   })
