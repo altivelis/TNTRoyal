@@ -1,3 +1,8 @@
+/**
+ * このファイルはゲーム全体の進行管理・イベント処理を担当します。
+ * ゲーム開始・終了、各種イベントハンドラ、プレイヤー・TNTの状態管理などを実装しています。
+ */
+
 import * as mc from "@minecraft/server";
 import * as lib from "./lib.js";
 import "./menu.js";
@@ -667,7 +672,10 @@ mc.system.runInterval(()=>{
   }
 })
 
-//ゲーム開始処理
+/**
+ * ゲーム開始処理
+ * 参加者の初期化・ステージ準備・カウントダウン・ゲーム状態遷移を行います。
+ */
 export function startGame(){
   if(mc.world.getDynamicProperty("status") != 0) return;
   // ゲームを開始する
@@ -795,7 +803,10 @@ export function startGame(){
   })
 }
 
-//終了処理
+/**
+ * ゲーム終了処理
+ * 勝者判定・リセット・演出・状態初期化を行います。
+ */
 function endGame(){
   mc.world.setDynamicProperty("status", 3);
   let winner = mc.world.getPlayers({tags:["player"], excludeTags:["dead", "spectator"]});

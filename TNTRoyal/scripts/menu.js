@@ -1,3 +1,8 @@
+/**
+ * このファイルはUIメニュー（ホーム・ステージ選択・能力選択・設定・説明）の表示と処理を担当します。
+ * プレイヤーが各種メニューを操作する際の画面遷移・設定変更などを実装しています。
+ */
+
 import * as mc from "@minecraft/server";
 import * as ui from "@minecraft/server-ui";
 import { startGame } from "./main";
@@ -30,6 +35,7 @@ function openMenu(player) {
 
 /**
  * ステージ選択メニューを開く
+ * プレイヤーがステージを選択できる画面を表示します。
  * @param {mc.Player} player 
  */
 export function openStageSelect(player) {
@@ -54,6 +60,7 @@ export function openStageSelect(player) {
 
 /**
  * 能力選択メニューを開く
+ * プレイヤーが能力（ロール）を選択できる画面を表示します。
  * @param {mc.Player} player
  */
 export function openRoleSelect(player) {
@@ -107,6 +114,7 @@ mc.world.afterEvents.worldLoad.subscribe(()=>{
 
 /**
  * ゲーム設定メニューを開く
+ * 制限時間などのゲーム設定を変更できる画面を表示します。
  * @param {mc.Player} player 
  */
 export function openSettingMenu(player) {
@@ -127,6 +135,7 @@ export function openSettingMenu(player) {
 
 /**
  * ワールド説明メニューを開く
+ * ワールドの概要・注意事項・ルール・アイテム説明などを表示します。
  * @param {mc.Player} player
  */
 export function openWorldDescription(player) {

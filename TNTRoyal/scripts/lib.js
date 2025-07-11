@@ -1,9 +1,14 @@
+/**
+ * このファイルはゲームロジック用のユーティリティ関数群を定義します。
+ * スコア管理、爆風処理、フィールド操作、座標計算など多様な機能を提供します。
+ */
+
 import * as mc from "@minecraft/server";
 import { breakable_block, roby, stage, through_block } from "./const.js";
 import { roleList } from "./role.js";
 
 /**
- * Timeoutを見やすくする関数
+ * 指定tick後に関数を実行するラッパー
  * @param {number} tick 
  * @param {()=>void} func
  */
@@ -12,7 +17,7 @@ export function myTimeout(tick, func){
 }
 
 /**
- * スコアボード取得関数
+ * スコアボードから指定目標のスコアを取得
  * @param {mc.Entity | mc.ScoreboardIdentity | string} target 
  * @param {string} objective 
  * @returns {number | undefined}
@@ -22,7 +27,7 @@ export function getScore(target, objective) {
 }
 
 /**
- * スコアボードセット関数
+ * スコアボードにスコアをセット
  * @param {mc.Entity | mc.ScoreboardIdentity | string} target
  * @param {string} objective
  * @param {number} score
@@ -33,7 +38,7 @@ export function setScore(target, objective, score) {
 }
 
 /**
- * スコアボード加算関数
+ * スコアボードのスコアを加算
  * @param {mc.Entity | mc.ScoreboardIdentity | string} target
  * @param {string} objective
  * @param {number} score

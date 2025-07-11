@@ -1,8 +1,14 @@
+/**
+ * このファイルはカスタムアイテム（パンチ・ショット）の挙動を定義します。
+ * プレイヤーがアイテムを使用した際の特殊効果やTNTの操作処理を担当します。
+ */
+
 import * as mc from "@minecraft/server";
 import * as lib from "./lib";
 import {stage} from "./const";
 
 mc.system.beforeEvents.startup.subscribe(ev=>{
+  // パンチアイテムの使用時処理
   ev.itemComponentRegistry.registerCustomComponent("tntr:punch", {
     onUse: data=>{
       data.source.startItemCooldown("punch", 4);
@@ -59,6 +65,7 @@ mc.system.beforeEvents.startup.subscribe(ev=>{
     }
   })
 
+  // ショットアイテムの使用時処理
   ev.itemComponentRegistry.registerCustomComponent("tntr:shot", {
     onUse: data=>{
       data.source.startItemCooldown("shot", 50);

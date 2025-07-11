@@ -1,3 +1,8 @@
+/**
+ * このファイルはゲーム内で使用する定数（座標・ステージ情報・破壊可能ブロック・爆風貫通ブロック）を定義します。
+ * ゲームロジックの各所で参照されます。
+ */
+
 import * as mc from "@minecraft/server";
 
 export const roby = {x:0.5, y:-58.5, z:0.5};
@@ -71,6 +76,9 @@ export const stage = [
 ]
 
 //破壊可能ブロックリスト
+/**
+ * 破壊可能なブロックのIDリスト
+ */
 export const breakable_block = [
   "minecraft:brick_block",
   "minecraft:snow",
@@ -80,6 +88,9 @@ export const breakable_block = [
 ]
 
 //爆風が貫通するブロックリスト
+/**
+ * 爆風が貫通するブロックのIDリスト
+ */
 export const through_block = [
   "minecraft:air",
   "minecraft:light_weighted_pressure_plate"

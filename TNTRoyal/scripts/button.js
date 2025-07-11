@@ -1,7 +1,21 @@
+/**
+ * このファイルはロビーの各ボタン（スタート・観戦・ステージ選択・能力選択・設定・説明）の処理を担当します。
+ * プレイヤーが特定座標のブロックを操作した際に、対応するメニューや機能を呼び出します。
+ */
+
 import * as mc from "@minecraft/server";
 import { startGame } from "./main";
 import { openRoleSelect, openSettingMenu, openStageSelect, openWorldDescription } from "./menu";
 
+/**
+ * ロビー内の各ボタン座標に応じて、対応する処理を実行します。
+ * - スタートボタン: ゲーム開始
+ * - 観戦ボタン: 観戦モード切替
+ * - ステージ選択: ステージ選択メニュー表示
+ * - 能力選択: 能力選択メニュー表示
+ * - 設定: 設定メニュー表示
+ * - ワールド説明: ワールド説明メニュー表示
+ */
 mc.world.beforeEvents.playerInteractWithBlock.subscribe(data=>{
   let {isFirstEvent, block, player} = data;
   if(!isFirstEvent) return;
