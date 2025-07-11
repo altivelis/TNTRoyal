@@ -18,6 +18,10 @@ let pressureTick = 0;
  */
 let pressure_location = [];
 let pressure_rate = 5;
+/**
+ * ゲーム開始時の参加人数
+ */
+let initialPlayerCount = 0;
 
 //テスト用コマンド
 mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
@@ -286,7 +290,11 @@ mc.system.runInterval(()=>{
 
     if(mc.world.getDynamicProperty("status") == 2) {
       //終了判定
-      if(mc.world.getPlayers({tags:["player"], excludeTags:["dead"]}).length <= 1) {
+      const alivePlayers = mc.world.getPlayers({tags:["player"], excludeTags:["dead"]}).length;
+      if (
+        (initialPlayerCount === 1 && alivePlayers === 0) ||
+        (initialPlayerCount !== 1 && alivePlayers <= 1)
+      ) {
         endGame();
       }
       //移動速度
@@ -682,6 +690,7 @@ export function startGame(){
   /** @type {Number} */
   let index = mc.world.getDynamicProperty("stage");
   let member = mc.world.getPlayers({excludeTags:["spectator"]});
+  initialPlayerCount = member.length; // 参加人数を保存
   let tpmember = member.concat();
   if(tpmember.length > stage[index].spawn.length) {
     mc.world.sendMessage(`§cプレイヤーが多すぎます。このステージは最大${stage[index].spawn.length}人まで参加できます。`);
