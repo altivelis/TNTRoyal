@@ -43,15 +43,24 @@ export function openStageSelect(player) {
   const menu_stage = new ui.ActionFormData();
   menu_stage.title("ステージ選択")
     .body("ステージを選択してください");
+  // ランダムボタンを最初に追加
+  menu_stage.button("ランダム", "textures/ui/icon_random.png");
   stage.forEach(s=>{
     menu_stage.button(s.name, s.icon);
   })
   menu_stage.show(player).then(res=>{
     if(res.canceled) return;
     if(mc.world.getDynamicProperty("status") != 0) return;
-    if(res.selection < stage.length){
-      mc.world.sendMessage(`${player.name}がステージ§e${stage[res.selection].name}§rを選択しました`);
-      mc.world.setDynamicProperty("stage", res.selection);
+    if(res.selection === 0) {
+      // ランダム選択
+      const randomIndex = Math.floor(Math.random() * stage.length);
+      mc.world.setDynamicProperty("stage", randomIndex);
+      mc.world.sendMessage(`${player.name}がランダムでステージ§e${stage[randomIndex].name}§rを選択しました`);
+      return;
+    }
+    if(res.selection > 0 && res.selection <= stage.length){
+      mc.world.sendMessage(`${player.name}がステージ§e${stage[res.selection-1].name}§rを選択しました`);
+      mc.world.setDynamicProperty("stage", res.selection-1);
       return;
     }
   })
