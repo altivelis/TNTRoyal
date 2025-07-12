@@ -25,7 +25,8 @@ export const roleList = [
     blue: {init: false, able: true},
     kick: {init: false, able: true},
     punch: {init: false, able: true},
-    icon: undefined,
+    icon: "textures/altivelis/steve.png",
+    particle: "altivelis:steve_face_particle",
   },
   {
     name: "ゾンビ",
@@ -35,7 +36,8 @@ export const roleList = [
     blue: {init: false, able: true},
     kick: {init: false, able: false},
     punch: {init: true, able: true},
-    icon: "textures/items/spawn_eggs/spawn_egg_zombie.png",
+    icon: "textures/altivelis/zombie.png",
+    particle: "altivelis:zombie_face_particle",
   },
   {
     name: "クリーパー",
@@ -45,7 +47,8 @@ export const roleList = [
     blue: {init: false, able: true},
     kick: {init: false, able: true},
     punch: {init: false, able: false},
-    icon: "textures/items/spawn_eggs/spawn_egg_creeper.png",
+    icon: "textures/altivelis/creeper.png",
+    particle: "altivelis:creeper_face_particle",
   },
   {
     name: "スケルトン",
@@ -55,7 +58,8 @@ export const roleList = [
     blue: {init: true, able: true},
     kick: {init: false, able: false},
     punch: {init: false, able: true},
-    icon: "textures/items/spawn_eggs/spawn_egg_skeleton.png",
+    icon: "textures/altivelis/skeleton.png",
+    particle: "altivelis:skeleton_face_particle",
   },
   {
     name: "ウィザースケルトン",
@@ -65,7 +69,8 @@ export const roleList = [
     blue: {init: false, able: true},
     kick: {init: false, able: true},
     punch: {init: false, able: true},
-    icon: "textures/items/spawn_eggs/spawn_egg_wither_skeleton.png",
+    icon: "textures/altivelis/wither_skeleton.png",
+    particle: "altivelis:wither_skeleton_face_particle",
   },
   {
     name: "ウィザー",
@@ -75,7 +80,8 @@ export const roleList = [
     blue: {init: false, able: true},
     kick: {init: false, able: true},
     punch: {init: false, able: false},
-    icon: "textures/items/spawn_eggs/spawn_egg_wither.png",
+    icon: "textures/altivelis/wither.png",
+    particle: "altivelis:wither_face_particle",
   },
   {
     name: "アイアンゴーレム",
@@ -85,6 +91,7 @@ export const roleList = [
     blue: {init: true, able: true},
     kick: {init: false, able: false},
     punch: {init: true, able: true},
-    icon: "textures/items/spawn_eggs/spawn_egg_iron_golem.png",
+    icon: "textures/altivelis/iron_golem.png",
+    particle: "altivelis:iron_golem_face_particle",
   }
 ]
