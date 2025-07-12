@@ -4,7 +4,7 @@
 		"name": "TNTRoyalアドオン",
 		"description": "TNTRoyalの動作アドオン",
 		"uuid": "11d9b75b-c665-4f48-821c-ba48c8dfc7b1",
-		"version": [1, 0, 1],
+		"version": [1, 0, 2],
 		"min_engine_version": [1, 21, 90]
 	},
 	"modules": [

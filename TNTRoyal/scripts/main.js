@@ -1040,6 +1040,10 @@ mc.world.afterEvents.playerButtonInput.subscribe(data=>{
 //ワールド参加時処理
 mc.world.afterEvents.playerSpawn.subscribe(data=>{
   if(!data.initialSpawn) return;
+  if(mc.world.getPlayers().length == 1) {
+    // 初期スポーン時にプレイヤーが1人だけならホストとして扱う
+    data.player.addTag("host");
+  }
   if(data.player.hasTag("player")) data.player.removeTag("player");
   if(data.player.hasTag("dead")) data.player.removeTag("dead");
   if(data.player.hasTag("kick")) data.player.removeTag("kick");
