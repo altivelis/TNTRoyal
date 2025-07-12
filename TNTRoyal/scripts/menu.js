@@ -112,16 +112,6 @@ export function openRoleSelect(player) {
   })
 }
 
-/**@type {ui.ModalFormData} */
-let menu_setting;
-
-mc.world.afterEvents.worldLoad.subscribe(()=>{
-  menu_setting = new ui.ModalFormData();
-  menu_setting.title("ゲーム設定")
-    .slider("§l§e制限時間", 70, 300, {valueStep: 10, defaultValue: mc.world.getDynamicProperty("time")})
-    .toggle("§l§b全員スティーブ", {defaultValue: mc.world.getDynamicProperty("allSteve") === true, tooltip: "ゲーム開始時に全員スティーブになります。"});
-})
-
 /**
  * ゲーム設定メニューを開く
  * 制限時間などのゲーム設定を変更できる画面を表示します。
@@ -129,18 +119,27 @@ mc.world.afterEvents.worldLoad.subscribe(()=>{
  */
 export function openSettingMenu(player) {
   if(mc.world.getDynamicProperty("status") != 0) return;
+  let menu_setting = new ui.ModalFormData()
+    .title("ゲーム設定")
+    .slider("§l§e制限時間", 70, 300, {valueStep: 10, defaultValue: mc.world.getDynamicProperty("time")})
+    .toggle("§l§b全員スティーブ", {defaultValue: mc.world.getDynamicProperty("allSteve") === true, tooltip: "ゲーム開始時に全員スティーブになります。"})
+    .toggle("§l§aみそボン", {defaultValue: mc.world.getDynamicProperty("misobon") === true, tooltip: "脱落しても復活のチャンス！"});
+
   menu_setting.show(player).then(res=>{
     if(res.canceled) return;
     if(mc.world.getDynamicProperty("status") != 0) return;
     const time = res.formValues[0];
     const allSteve = res.formValues[1];
+    const misobon = res.formValues[2];
     mc.world.setDynamicProperty("time", time);
     mc.world.setDynamicProperty("allSteve", allSteve);
+    mc.world.setDynamicProperty("misobon", misobon);
 
     mc.world.sendMessage(
       `§b===ゲーム設定変更===\n` +
       `§e制限時間§r§l: §a${time}秒§r\n` +
       `§e全員スティーブ§r§l: §a${allSteve ? "ON" : "OFF"}§r\n` +
+      `§eみそボン有効§r§l: §a${misobon ? "ON" : "OFF"}§r\n` +
       `§b===================`
     )
   })

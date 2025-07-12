@@ -147,7 +147,7 @@ export function explode_particle(dimension, location, owner = undefined, revival
       entity.removeTag("kick");
       entity.removeTag("punch");
       entity.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
-      if(getScore("残り時間", "display") <= 60) {
+      if(getScore("残り時間", "display") <= 60 || mc.world.getDynamicProperty("misobon") === false) {
         entity.teleport(roby);
         entity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
       }
