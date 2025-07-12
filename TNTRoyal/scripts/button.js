@@ -22,6 +22,10 @@ mc.world.beforeEvents.playerInteractWithBlock.subscribe(data=>{
   if(`${block.location.x} ${block.location.y} ${block.location.z}` == "-1 -58 8") {
     //スタートボタン
     data.cancel = true;
+    if(!player.hasTag("host")) {
+      player.sendMessage("§cホストのみがゲームを開始できます。");
+      return;
+    }
     mc.system.run(()=> {
       startGame();
     })
@@ -57,6 +61,10 @@ mc.world.beforeEvents.playerInteractWithBlock.subscribe(data=>{
   if(`${block.location.x} ${block.location.y} ${block.location.z}` == "-3 -58 8") {
     //設定メニューボタン
     data.cancel = true;
+    if(!player.hasTag("host")) {
+      player.sendMessage("§cホストのみが設定を変更できます。");
+      return;
+    }
     mc.system.run(()=>{
       openSettingMenu(player);
     })
