@@ -417,6 +417,13 @@ mc.system.runInterval(()=>{
       marker.teleport({...marker.location, y: marker.location.y-1});
     }
   })
+  if(mc.world.getDynamicProperty("status") == 1) {
+    mc.world.getPlayers({tags:["player"]}).forEach(player=>{
+      let role = roleList[player.getDynamicProperty("role")];
+      player.dimension.spawnParticle(role.particle, {...player.location, y: player.location.y+2});
+      player.spawnParticle("altivelis:player_sign", {...player.location, y: player.location.y+2.1, z: player.location.z+1});
+    })
+  }
 
   //TNT移動
   mc.world.getDimension("overworld").getEntities({type: "altivelis:tnt"}).filter(e=>{return e.getDynamicProperty("kickOwnerId") != undefined}).forEach(tnt=>{
@@ -685,6 +692,10 @@ mc.system.runInterval(()=>{
       }
       if(player.location.z > stage[stageIndex].area.end.z+1) {
         player.teleport({...player.location, z: stage[stageIndex].area.end.z+0.5});
+      }
+      //もし足元が通過可能ブロックであれば、下にテレポートする
+      if(through_block.includes(player.dimension.getBlock(player.location).below().typeId)) {
+        player.teleport({...player.location, y: player.location.y-0.5});
       }
     })
   }
