@@ -48,7 +48,6 @@ mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
       player.camera.clear();
       player.teleport(roby, {rotation: {x:0, y:0}});
       player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Reset, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
-      player.setDynamicProperty("bomb", 0);
       player.stopMusic();
       let moveComp = player.getComponent(mc.EntityMovementComponent.componentId);
       moveComp.resetToDefaultValue();
@@ -774,7 +773,6 @@ export function startGame(){
       player.addTag("player");
       player.removeTag("kick");
       player.removeTag("punch");
-      player.setDynamicProperty("bomb", 0);
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
       //初期ステータス適用
       lib.setScore(player, "bomb", role.bomb.init);
@@ -913,7 +911,6 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
   let blue = data.source.hasTag("blue");
   let revival = data.source.hasTag("revival");
   mc.system.run(()=>{
-    if(owner != undefined && !revival) owner.setDynamicProperty("bomb", owner.getDynamicProperty("bomb")-1);
     data.dimension.playSound("random.explode", pos, {volume: 4});
     if(power >= 8) {
       mc.world.getDimension("overworld").runCommand(`camerashake add @a 0.3 0.2 positional`);
@@ -1002,7 +999,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
 mc.world.afterEvents.itemUse.subscribe(data=>{
   let {source, itemStack} = data;
   if(itemStack.typeId != "minecraft:tnt") return;
-  if(source.getDynamicProperty("bomb") != undefined && source.getDynamicProperty("bomb") >= lib.getScore(source, "bomb")) return;
+  if(source.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return e?.owner.id == source.id}).length >= lib.getScore(source, "bomb")) return;
   if(source.dimension.getEntities({location: source.location, maxDistance:0.5, type:"altivelis:tnt"}).length > 0) return;
   let pos = source.location;
   // mc.world.sendMessage(`x: ${Math.floor(pos.x)}, y: ${Math.floor(pos.y)}, z: ${Math.floor(pos.z)}`);
@@ -1013,8 +1010,6 @@ mc.world.afterEvents.itemUse.subscribe(data=>{
   }
   tnt.owner = source;
   tnt.setDynamicProperty("power", lib.getScore(source, "power"));
-  if(source.getDynamicProperty("bomb") == undefined) source.setDynamicProperty("bomb", 1);
-  else source.setDynamicProperty("bomb", source.getDynamicProperty("bomb")+1);
 })
 
 //ボタン入力処理
@@ -1022,7 +1017,7 @@ mc.world.afterEvents.playerButtonInput.subscribe(data=>{
   if(mc.world.getDynamicProperty("status") != 2) return;
   let player = data.player;
   if(player.hasTag("dead")) return;
-  if(player.getDynamicProperty("bomb") != undefined && player.getDynamicProperty("bomb") >= lib.getScore(player, "bomb")) return;
+  if(player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return e?.owner.id == player.id}).length >= lib.getScore(player, "bomb")) return;
   if(player.dimension.getEntities({location: player.location, maxDistance:0.5, type:"altivelis:tnt"}).length > 0) return;
   let pos = player.location;
   let tnt = player.dimension.spawnEntity("altivelis:tnt", {x: Math.floor(pos.x)+0.5, y: Math.floor(pos.y), z: Math.floor(pos.z)+0.5});
@@ -1033,8 +1028,6 @@ mc.world.afterEvents.playerButtonInput.subscribe(data=>{
   tnt.owner = player;
   tnt.setDynamicProperty("power", lib.getScore(player, "power"));
   tnt.dimension.playSound("fire.ignite", tnt.location, {volume: 10});
-  if(player.getDynamicProperty("bomb") == undefined) player.setDynamicProperty("bomb", 1);
-  else player.setDynamicProperty("bomb", player.getDynamicProperty("bomb")+1);
 }, {buttons: [mc.InputButton.Jump], state: mc.ButtonState.Pressed})
 
 //ワールド参加時処理
@@ -1050,7 +1043,6 @@ mc.world.afterEvents.playerSpawn.subscribe(data=>{
   if(data.player.hasTag("punch")) data.player.removeTag("punch");
   if(data.player.hasTag("tp")) data.player.removeTag("tp");
   if(data.player.hasTag("revival")) data.player.removeTag("revival");
-  data.player.setDynamicProperty("bomb", 0);
   data.player.teleport(roby, {rotation: {x:0, y:0}});
   /** @type {Number} */
   let index = mc.world.getDynamicProperty("stage");
