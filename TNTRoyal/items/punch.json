@@ -24,6 +24,7 @@
       "minecraft:use_modifiers": {
         "use_duration": 1.6
       },
+      "minecraft:hand_equipped": false,
       "minecraft:glint": true,
       "minecraft:interact_button" : "TNTを弾き飛ばす",
       "minecraft:rarity": "epic",
