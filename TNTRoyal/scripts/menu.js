@@ -5,33 +5,9 @@
 
 import * as mc from "@minecraft/server";
 import * as ui from "@minecraft/server-ui";
-import { startGame } from "./main";
 import { stage } from "./const";
 import { roleList } from "./role";
-
-mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
-  if(data.id == "tnt:menu"){
-    // メニューを開く
-    openMenu(data.sourceEntity);
-  }
-})
-
-function openMenu(player) {
-  const menu_home = new ui.ActionFormData();
-  menu_home.title("ホームメニュー")
-    .body("ゲームの開始・設定ができます")
-    .button("ゲームを開始する")
-    .button("設定");
-  menu_home.show(player).then(res=>{
-    if(res.canceled) return;
-    if(res.selection == 0){
-      startGame();
-    }
-    else if(res.selection == 1){
-      // 設定
-    }
-  })
-}
+import { openPatchNoteForm } from "./patchNote";
 
 /**
  * ステージ選択メニューを開く
@@ -46,7 +22,7 @@ export function openStageSelect(player) {
   // ランダムボタンを最初に追加
   menu_stage.button("ランダム", "textures/ui/icon_random.png");
   stage.forEach(s=>{
-    menu_stage.button(s.name, s.icon);
+    menu_stage.button(s.displayName, s.icon);
   })
   menu_stage.show(player).then(res=>{
     if(res.canceled) return;
@@ -55,11 +31,11 @@ export function openStageSelect(player) {
       // ランダム選択
       const randomIndex = Math.floor(Math.random() * stage.length);
       mc.world.setDynamicProperty("stage", randomIndex);
-      mc.world.sendMessage(`${player.name}がランダムでステージ§e${stage[randomIndex].name}§rを選択しました`);
+      mc.world.sendMessage(`${player.name}がランダムでステージ「§e${stage[randomIndex].displayName}§r」を選択しました`);
       return;
     }
     if(res.selection > 0 && res.selection <= stage.length){
-      mc.world.sendMessage(`${player.name}がステージ§e${stage[res.selection-1].name}§rを選択しました`);
+      mc.world.sendMessage(`${player.name}がステージ「§e${stage[res.selection-1].displayName}§r」を選択しました`);
       mc.world.setDynamicProperty("stage", res.selection-1);
       return;
     }
@@ -194,6 +170,10 @@ export function openWorldDescription(player) {
         // アイテムの説明
         openItemDescription(player);
         break;
+      case 6:
+        // パッチノート
+        openPatchNoteForm(player);
+        break;
     }
   })
 }
@@ -254,6 +234,9 @@ const item_description_list = [
   // スピード
   "§l§bスピード§r\n" +
   "プレイヤーの移動速度を上げます。",
+  // 鈍足
+  "§l§8鈍足§r\n" +
+  "プレイヤーの移動速度を下げます。",
   // ブレイズパウダー
   "§l§eブレイズパウダー§r\n" +
   "火力が最大まで上昇します。",
@@ -281,7 +264,8 @@ mc.world.afterEvents.worldLoad.subscribe(()=>{
     .button("§l§dロビーの使い方")
     .button("§l§bルール説明")
     .button("§l§e操作方法")
-    .button("§l§6アイテムの説明");
+    .button("§l§6アイテムの説明")
+    .button("§l§8パッチノート");
 
   world_description_form = new ui.ActionFormData()
     .title("§l§cTNT Royale§r - ワールド説明")
@@ -361,6 +345,7 @@ mc.world.afterEvents.worldLoad.subscribe(()=>{
     .button("§l§cTNT", "textures/blocks/tnt_side.png")
     .button("§l§6火力アップ", "textures/gui/newgui/mob_effects/fire_resistance_effect.png")
     .button("§l§bスピード", "textures/gui/newgui/mob_effects/speed_effect.png")
+    .button("§l§8鈍足", "textures/gui/newgui/mob_effects/slowness_effect.png")
     .button("§l§eブレイズパウダー", "textures/items/blaze_powder.png")
     .button("§l§9貫通TNT", "textures/altivelis/blue_tnt_texture_side")
     .button("§l§3キック", "textures/items/rabbit_foot.png")

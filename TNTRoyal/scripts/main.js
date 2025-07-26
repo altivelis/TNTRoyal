@@ -295,7 +295,7 @@ mc.system.runInterval(()=>{
         `あなたは${(player.hasTag("spectator") ? "§l§7観戦者§r" : "§l§a参加者§r")}です§r\n` +
         `現在の人数: §l${(joinPlayers.length > stage[stageIndex].spawn.length) ? "§c" : "§b"}${joinPlayers.length}§r\n` +
         `能力: §l§6${roleList[player.getDynamicProperty("role")].name}§r\n` +
-        `ステージ: §l§e${stage[stageIndex].name}§r\n`
+        `ステージ: §l§e${stage[stageIndex].displayName}§r\n`
       )
     }
 

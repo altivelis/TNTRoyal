@@ -10,6 +10,7 @@ export const roby = {x:0.5, y:-58.5, z:0.5};
 /**
  * @typedef {Object} Stage
  * @property {string} name - The name of the stage.
+ * @property {string} displayName - The display name of the stage, shown in the UI.
  * @property {{start: mc.Vector3, end: mc.Vector3}} area - The area of the stage defined by start and end coordinates.
  * @property {Array<mc.Vector3>} spawn - The spawn points within the stage.
  * @property {mc.Vector3} pivot - The pivot point of the stage.
@@ -20,6 +21,7 @@ export const roby = {x:0.5, y:-58.5, z:0.5};
 export const stage = [
   {
     name: "village",
+    displayName: "村",
     area: {start: {x:-6, y:-59, z:-69}, end: {x:6, y:-59, z:-59}},
     spawn: [
       {x:6, y:-59, z:-69}, {x:6, y:-59, z:-59}, {x:-6, y:-59, z:-59}, {x:-6, y:-59, z:-69}
@@ -31,6 +33,7 @@ export const stage = [
   },
   {
     name: "snowy_taiga",
+    displayName: "雪のタイガ",
     area: {start: {x:-70, y:-59, z:-69}, end: {x:-58, y:-59, z:-59}},
     spawn: [
       {x:-70, y:-59, z:-69}, {x:-58, y:-59, z:-59}, {x:-70, y:-59, z:-59}, {x:-58, y:-59, z:-69}
@@ -42,6 +45,7 @@ export const stage = [
   },
   {
     name: "desert",
+    displayName: "砂漠",
     area: {start: {x:58, y:-59, z:-69}, end: {x:70, y:-59, z:-59}},
     spawn: [
       {x:58, y:-59, z:-69}, {x:70, y:-59, z:-59}, {x:58, y:-59, z:-59}, {x:70, y:-59, z:-69}
@@ -53,6 +57,7 @@ export const stage = [
   },
   {
     name: "nether_fortress",
+    displayName: "ネザー要塞",
     area: {start: {x:-70, y:-59, z:-5}, end: {x:-58, y:-59, z:5}},
     spawn: [
       {x:-70, y:-59, z:-5}, {x:-58, y:-59, z:5}, {x:-70, y:-59, z:5}, {x:-58, y:-59, z:-5}
@@ -64,6 +69,7 @@ export const stage = [
   },
   {
     name: "mineshaft",
+    displayName: "廃坑",
     area: {start: {x:58, y:-59, z:-5}, end: {x:70, y:-57, z: 5}},
     spawn: [
       {x:58, y:-59, z:-5}, {x:70, y:-59, z:5}, {x:58, y:-59, z:5}, {x:70, y:-59, z:-5}
