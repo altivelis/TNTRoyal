@@ -10,6 +10,7 @@ import "./button.js";
 import "./item.js";
 import { roleList } from "./role.js";
 import { breakable_block, roby, stage, through_block } from "./const.js";
+import { getSpiderWeb } from "./skills/spider.js";
 
 let tick = 0;
 let pressureTick = 0;
@@ -36,6 +37,7 @@ mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
       player.removeTag("kick");
       player.removeTag("punch");
       player.removeTag("tp");
+      player.removeTag("spider_web");
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, true);
@@ -311,6 +313,9 @@ mc.system.runInterval(()=>{
       if(player.hasTag("dead")){
         moveComp.setCurrentValue(moveComp.defaultValue);
       }
+      else if(player.hasTag("spider_web")) {
+        moveComp.setCurrentValue(moveComp.defaultValue - 0.1);
+      }
       else {
         moveComp.setCurrentValue(moveComp.defaultValue + 0.01 * lib.getScore(player, "speed"));
       }
@@ -342,44 +347,61 @@ mc.system.runInterval(()=>{
        */
       let role = roleList[player.getDynamicProperty("role")];
       item.forEach(entity => {
+        let processed = false;
         switch(entity.getTags()[0]){
           case "bomb":
             if(lib.getScore(player, "bomb") < role.bomb.max) {
               lib.addScore(player, "bomb", 1);
             }
+            processed = true;
             break;
           case "power":
             if(lib.getScore(player, "power") < role.power.max) {
               lib.addScore(player, "power", 1);
             }
+            processed = true;
             break;
           case "speed":
             if(lib.getScore(player, "speed") < role.speed.max) {
               lib.addScore(player, "speed", 1);
             }
+            processed = true;
             break;
           case "blue_tnt":
             if(role.blue.able) player.setDynamicProperty("tnt", 1);
+            processed = true;
             break;
           case "kick":
             if(role.kick.able) player.addTag("kick");
+            processed = true;
             break;
           case "punch":
             if(role.punch.able) {
               player.addTag("punch");
-              let slot = player.getComponent(mc.EntityInventoryComponent.componentId).container.getSlot(0);
               let item = new mc.ItemStack("altivelis:punch", 1);
-              item.lockMode = mc.ItemLockMode.slot;
-              slot.setItem(item);
-              player.selectedSlotIndex = 0;
+              item.lockMode = mc.ItemLockMode.inventory;
+              player.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
             }
+            processed = true;
             break;
           case "full_fire":
             lib.setScore(player, "power", role.power.max);
+            processed = true;
+            break;
+          case "slowness":
+            if(lib.getScore(player, "speed") > role.speed.init) {
+              lib.addScore(player, "speed", -1);
+            }
+            processed = true;
             break;
         }
-        player.playSound("random.orb", {location: player.location, volume: 10});
-        entity.remove();
+        if(processed) {
+          player.playSound("random.orb", {location: player.location, volume: 10});
+          entity.remove();
+        } else {
+          //特殊アイテム処理
+          getSpiderWeb(player, entity);
+        }
       })
     }
   })
@@ -410,6 +432,12 @@ mc.system.runInterval(()=>{
         break;
       case "full_fire":
         marker.dimension.spawnParticle("altivelis:full_fire_particle", {...marker.location, y: marker.location.y+0.5});
+        break;
+      case "slowness":
+        marker.dimension.spawnParticle("altivelis:slowness_particle", {...marker.location, y: marker.location.y+0.5});
+        break;
+      case "spider_web":
+        marker.dimension.spawnParticle("altivelis:spider_web_particle", {...marker.location, y: marker.location.y+0.5});
         break;
     }
     if(through_block.includes(mc.world.getDimension("overworld").getBlock({...marker.location, y: marker.location.y-1}).typeId)){
@@ -773,6 +801,9 @@ export function startGame(){
       player.addTag("player");
       player.removeTag("kick");
       player.removeTag("punch");
+      player.removeTag("tp");
+      player.removeTag("revival")
+      player.removeTag("spider_web");
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
       //初期ステータス適用
       lib.setScore(player, "bomb", role.bomb.init);
@@ -784,11 +815,15 @@ export function startGame(){
       }
       if(role.punch.init) {
         player.addTag("punch");
-        let slot = player.getComponent(mc.EntityInventoryComponent.componentId).container.getSlot(0);
         let item = new mc.ItemStack("altivelis:punch", 1);
-        item.lockMode = mc.ItemLockMode.slot;
-        slot.setItem(item);
-        player.selectedSlotIndex = 0;
+        item.lockMode = mc.ItemLockMode.inventory;
+        player.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
+      }
+      //特殊スキルアイテム配布
+      if(role.name == "クモ") {
+        let item = new mc.ItemStack("altivelis:skill_spider", 1);
+        item.lockMode = mc.ItemLockMode.inventory;
+        player.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
       }
     })
     mc.world.getPlayers().forEach(player=>{
@@ -872,6 +907,7 @@ function endGame(){
       player.removeTag("punch");
       player.removeTag("tp");
       player.removeTag("revival");
+      player.removeTag("spider_web");
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, true);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, true);
@@ -920,7 +956,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, x: pos.x+i});
       if(block.below().typeId == "minecraft:air") break;
-      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, x:pos.x+i})}).length == 0){
+      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"], excludeTags:["spider_web"]}).filter(e=>{return lib.compLocation(e.location, {...pos, x:pos.x+i})}).length == 0){
         lib.explode_particle(data.dimension, {...pos, x: pos.x+i}, owner, revival);
       }
       else{
@@ -936,7 +972,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, x: pos.x-i});
       if(block.below().typeId == "minecraft:air") break;
-      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, x:pos.x-i})}).length == 0){
+      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"], excludeTags:["spider_web"]}).filter(e=>{return lib.compLocation(e.location, {...pos, x:pos.x-i})}).length == 0){
         lib.explode_particle(data.dimension, {...pos, x: pos.x-i}, owner, revival);
       }
       else{
@@ -952,7 +988,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, z: pos.z+i});
       if(block.below().typeId == "minecraft:air") break;
-      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, z:pos.z+i})}).length == 0){
+      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"], excludeTags:["spider_web"]}).filter(e=>{return lib.compLocation(e.location, {...pos, z:pos.z+i})}).length == 0){
         lib.explode_particle(data.dimension, {...pos, z: pos.z+i}, owner, revival);
       }
       else{
@@ -968,7 +1004,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, z: pos.z-i});
       if(block.below().typeId == "minecraft:air") break;
-      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, z:pos.z-i})}).length == 0){
+      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"], excludeTags:["spider_web"]}).filter(e=>{return lib.compLocation(e.location, {...pos, z:pos.z-i})}).length == 0){
         lib.explode_particle(data.dimension, {...pos, z: pos.z-i}, owner, revival);
       }
       else{
@@ -984,7 +1020,7 @@ mc.world.beforeEvents.explosion.subscribe(data=>{
     for(let i=1; i<=power; i++){
       let block = data.dimension.getBlock({...pos, y: pos.y-i});
       if(block.below().typeId == "minecraft:air") break;
-      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"]}).filter(e=>{return lib.compLocation(e.location, {...pos, y:pos.y-i})}).length == 0){
+      if(through_block.includes(block.typeId) && data.dimension.getEntities({excludeTypes:["minecraft:player"], excludeTags:["spider_web"]}).filter(e=>{return lib.compLocation(e.location, {...pos, y:pos.y-i})}).length == 0){
         lib.explode_particle(data.dimension, {...pos, y: pos.y-i}, owner, revival);
       }
       else{

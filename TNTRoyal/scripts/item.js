@@ -6,6 +6,7 @@
 import * as mc from "@minecraft/server";
 import * as lib from "./lib";
 import {stage} from "./const";
+import { onUseSpider } from "./skills/spider";
 
 mc.system.beforeEvents.startup.subscribe(ev=>{
   // パンチアイテムの使用時処理
@@ -109,6 +110,16 @@ mc.system.beforeEvents.startup.subscribe(ev=>{
         tnt.setDynamicProperty("power", 2);
         tnt.addTag("revival");
         tnt.owner = data.source;
+      }
+    }
+  })
+
+  ev.itemComponentRegistry.registerCustomComponent("tntr:skill", {
+    onUse: data=>{
+      switch(data.itemStack.typeId) {
+        case "altivelis:skill_spider":
+          onUseSpider(data);
+          break;
       }
     }
   })

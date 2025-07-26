@@ -89,7 +89,7 @@ export function explode_particle(dimension, location, owner = undefined, revival
       entity.triggerEvent("from_explosion");
       return;
     }
-    if(entity.typeId == "altivelis:marker"){
+    if(entity.typeId == "altivelis:marker" && !entity.hasTag("spider_web")){
       entity.remove();
       return;
     }
@@ -116,11 +116,14 @@ export function explode_particle(dimension, location, owner = undefined, revival
         }
         if(role.punch.init) {
           owner.addTag("punch");
-          let slot = owner.getComponent(mc.EntityInventoryComponent.componentId).container.getSlot(0);
           let item = new mc.ItemStack("altivelis:punch", 1);
-          item.lockMode = mc.ItemLockMode.slot;
-          slot.setItem(item);
-          owner.selectedSlotIndex = 0;
+          item.lockMode = mc.ItemLockMode.inventory;
+          owner.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
+        }
+        if(role.name == "クモ") {
+          let item = new mc.ItemStack("altivelis:skill_spider", 1);
+          item.lockMode = mc.ItemLockMode.inventory;
+          owner.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
         }
         owner.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, true);
         owner.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, true);
@@ -190,6 +193,7 @@ export function explode_block(dimension, location, owner = undefined, revival = 
         {tag: "kick", probability: 2},
         {tag: "punch", probability: 2},
         {tag: "full_fire", probability: 1},
+        {tag: "slowness", probability: 2},
       ]
       let total = probabilities.reduce((sum, item) => sum + item.probability, 0);
       let random = Math.floor(Math.random() * total);

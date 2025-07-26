@@ -94,7 +94,8 @@ export function openRoleSelect(player) {
           `\n§l<<§d特殊アイテム§r§l>>§r\n` +
           `§l§9貫通TNT§r§l: ${roleList[res.selection].blue.init ? "§a所持" : roleList[res.selection].blue.able ? "§e有効" : "§7無効"}§r\n` +
           `§l§cキック§r§l: ${roleList[res.selection].kick.init ? "§a所持" : roleList[res.selection].kick.able ? "§e有効" : "§7無効"}§r\n` +
-          `§l§bパンチ§r§l: ${roleList[res.selection].punch.init ? "§a所持" : roleList[res.selection].punch.able ? "§e有効" : "§7無効"}§r\n`
+          `§l§bパンチ§r§l: ${roleList[res.selection].punch.init ? "§a所持" : roleList[res.selection].punch.able ? "§e有効" : "§7無効"}§r\n` +
+          `\n§l§e${roleList[res.selection].description}§r\n`
         )
         .button2("選択")
         .button1("キャンセル");
