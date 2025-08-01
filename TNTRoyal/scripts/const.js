@@ -78,6 +78,18 @@ export const stage = [
     spectator: {x:64.5, y:-56, z:6.5},
     block: "minecraft:cobblestone",
     icon: "textures/blocks/cobblestone.png"
+  },
+  {
+    name: "stronghold",
+    displayName: "エンド要塞",
+    area: {start: {x:-70, y:-58, z:59}, end: {x:-58, y:-58, z:69}},
+    spawn: [
+      {x:-70, y:-58, z:59}, {x:-58, y:-58, z:69}, {x:-70, y:-58, z:69}, {x:-58, y:-58, z:59}
+    ],
+    pivot: {x:-71, y:-60, z:58},
+    spectator: {x:-63.5, y:-56, z:70.5},
+    block: "minecraft:cracked_stone_bricks",
+    icon: "textures/blocks/stonebrick.png"
   }
 ]
 
@@ -91,6 +103,7 @@ export const breakable_block = [
   "minecraft:azalea_leaves",
   "minecraft:netherrack",
   "minecraft:cobblestone",
+  "minecraft:cracked_stone_bricks"
 ]
 
 //爆風が貫通するブロックリスト
@@ -99,5 +112,7 @@ export const breakable_block = [
  */
 export const through_block = [
   "minecraft:air",
-  "minecraft:light_weighted_pressure_plate"
+  "minecraft:light_weighted_pressure_plate",
+  "minecraft:stone_pressure_plate",
+  "minecraft:iron_door"
 ]
