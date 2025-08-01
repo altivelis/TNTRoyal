@@ -376,7 +376,7 @@ mc.system.runInterval(()=>{
             processed = true;
             break;
           case "punch":
-            if(role.punch.able) {
+            if(role.punch.able && !player.hasTag("punch")) {
               player.addTag("punch");
               let item = new mc.ItemStack("altivelis:punch", 1);
               item.lockMode = mc.ItemLockMode.inventory;
@@ -595,12 +595,7 @@ mc.system.runInterval(()=>{
       if(overlap.length > 0) {
         overlap.forEach(e=>{
           if(e.hasTag("player") && !e.hasTag("dead")) {
-            e.addTag("dead");
-            e.dimension.playSound("random.anvil_land", e.location, {volume: 10});
-            e.teleport(roby);
-            e.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
-            mc.world.sendMessage(`§c${e.nameTag.replace("\n", "")}§rは金床に潰された！`);
-            lib.dropItem(e);
+            lib.dropPlayer(e, "金床に潰された", "random.anvil_land");
           }
         })
       }
@@ -720,6 +715,10 @@ mc.system.runInterval(()=>{
       if(player.location.z > stage[stageIndex].area.end.z+1) {
         player.teleport({...player.location, z: stage[stageIndex].area.end.z+0.5});
       }
+      //もし足元がバリアブロックなら、脱落する
+      if(mc.world.getDimension("overworld").getBlock(player.location).below().typeId == "minecraft:barrier") {
+        lib.dropPlayer(player, "エリア外に落ちた！");
+      }
       //もし足元が通過可能ブロックであれば、下にテレポートする
       if(through_block.includes(player.dimension.getBlock(player.location).below().typeId)) {
         player.teleport({...player.location, y: player.location.y-0.5});
@@ -793,10 +792,6 @@ export function startGame(){
       if (mc.world.getDynamicProperty("allSteve") === true) {
         player.setDynamicProperty("role", 0);
       }
-      /**
-       * @type {roleList}
-       */
-      let role = roleList[player.getDynamicProperty("role")];
       //初期化
       player.addTag("player");
       player.removeTag("kick");
@@ -806,25 +801,7 @@ export function startGame(){
       player.removeTag("spider_web");
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
       //初期ステータス適用
-      lib.setScore(player, "bomb", role.bomb.init);
-      lib.setScore(player, "power", role.power.init);
-      lib.setScore(player, "speed", role.speed.init);
-      player.setDynamicProperty("tnt", role.blue.init ? 1 : 0);
-      if(role.kick.init) {
-        player.addTag("kick");
-      }
-      if(role.punch.init) {
-        player.addTag("punch");
-        let item = new mc.ItemStack("altivelis:punch", 1);
-        item.lockMode = mc.ItemLockMode.inventory;
-        player.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
-      }
-      //特殊スキルアイテム配布
-      if(role.name == "クモ") {
-        let item = new mc.ItemStack("altivelis:skill_spider", 1);
-        item.lockMode = mc.ItemLockMode.inventory;
-        player.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
-      }
+      lib.initPlayer(player);
     })
     mc.world.getPlayers().forEach(player=>{
       let center = lib.getCenter(stage[index].area);

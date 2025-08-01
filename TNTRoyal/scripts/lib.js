@@ -94,41 +94,12 @@ export function explode_particle(dimension, location, owner = undefined, revival
       return;
     }
     if(entity instanceof mc.Player && mc.world.getDynamicProperty("status") == 2 && !entity.hasTag("revival") && !entity.hasTag("dead")) {
-      entity.addTag("dead");
-      entity.dimension.playSound("item.trident.thunder", entity.location, {volume: 10});
-      mc.world.sendMessage(`§c${entity.nameTag.replace("\n", "")}§rは爆発に巻き込まれた！`);
       //復活
       if(revival && owner != undefined) {
         owner.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
         owner.teleport({x:Math.floor(entity.location.x)+0.5, y:Math.floor(entity.location.y)+0.5, z:Math.floor(entity.location.z)+0.5});
-        owner.removeTag("dead");
         mc.world.sendMessage(`§a${owner.nameTag.replace("\n", "")}§rが復活！！`);
-        //初期ステータス適用
-        /**@type {Number} */
-        let roleIndex = owner.getDynamicProperty("role");
-        let role = roleList[roleIndex];
-        setScore(owner, "bomb", role.bomb.init);
-        setScore(owner, "power", role.power.init);
-        setScore(owner, "speed", role.speed.init);
-        owner.setDynamicProperty("tnt", role.blue.init ? 1 : 0);
-        if(role.kick.init) {
-          owner.addTag("kick");
-        }
-        if(role.punch.init) {
-          owner.addTag("punch");
-          let item = new mc.ItemStack("altivelis:punch", 1);
-          item.lockMode = mc.ItemLockMode.inventory;
-          owner.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
-        }
-        if(role.name == "クモ") {
-          let item = new mc.ItemStack("altivelis:skill_spider", 1);
-          item.lockMode = mc.ItemLockMode.inventory;
-          owner.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
-        }
-        owner.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, true);
-        owner.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, true);
-        owner.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, true);
-        owner.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, true);
+        initPlayer(owner);
         //無敵化、パーティクル
         let runId = mc.system.runInterval(()=>{
           owner.dimension.spawnParticle("minecraft:totem_particle", owner.location);
@@ -139,30 +110,7 @@ export function explode_particle(dimension, location, owner = undefined, revival
           mc.system.clearRun(runId);
         })
       }
-      dropItem(entity);
-      /**@type {Number} */
-      let roleIndex = entity.getDynamicProperty("role");
-      let role = roleList[roleIndex];
-      setScore(entity, "bomb", role.bomb.init);
-      setScore(entity, "power", role.power.init);
-      setScore(entity, "speed", role.speed.init);
-      entity.setDynamicProperty("tnt", 0);
-      entity.removeTag("kick");
-      entity.removeTag("punch");
-      entity.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
-      if(getScore("残り時間", "display") <= 60 || mc.world.getDynamicProperty("misobon") === false) {
-        entity.teleport(roby);
-        entity.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
-      }
-      else {
-        /**@type {Number} */
-        let stageIndex = mc.world.getDynamicProperty("stage");
-        entity.teleport(stage[stageIndex].spectator);
-        let slot = entity.getComponent(mc.EntityInventoryComponent.componentId).container.getSlot(0);
-        slot.setItem(new mc.ItemStack("altivelis:shot"));
-        slot.getItem().lockMode = mc.ItemLockMode.slot;
-        entity.selectedSlotIndex = 0;
-      }
+      dropPlayer(entity, "爆風に巻き込まれた！");
     }
   })
 }
@@ -452,5 +400,77 @@ export function tryTeleport(dimension, location){
     }
   }else{
     return false;
+  }
+}
+
+/**
+ * プレイヤー初期化関数
+ * @param {mc.Player} player
+ */
+export function initPlayer(player) {
+  player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
+  player.removeTag("dead");
+  //初期ステータス適用
+  /**@type {Number} */
+  let roleIndex = player.getDynamicProperty("role");
+  let role = roleList[roleIndex];
+  setScore(player, "bomb", role.bomb.init);
+  setScore(player, "power", role.power.init);
+  setScore(player, "speed", role.speed.init);
+  player.setDynamicProperty("tnt", role.blue.init ? 1 : 0);
+  if(role.kick.init) {
+    player.addTag("kick");
+  }
+  if(role.punch.init) {
+    player.addTag("punch");
+    let item = new mc.ItemStack("altivelis:punch", 1);
+    item.lockMode = mc.ItemLockMode.inventory;
+    player.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
+  }
+  if(role.name == "クモ") {
+    let item = new mc.ItemStack("altivelis:skill_spider", 1);
+    item.lockMode = mc.ItemLockMode.inventory;
+    player.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
+  }
+  player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, true);
+  player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, true);
+  player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, true);
+  player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, true);
+}
+
+/**
+ * 脱落処理関数
+ * @param {mc.Player} player
+ * @param {string} reason
+ * @param {string} sound
+ */
+export function dropPlayer(player, reason, sound = "item.trident.thunder") {
+  if(mc.world.getDynamicProperty("status") == 2 && !player.hasTag("dead")) {
+    player.addTag("dead");
+    player.dimension.playSound(sound, player.location, {volume: 10});
+    mc.world.sendMessage(`§c${player.nameTag.replace("\n", "")}§rは${reason}！`);
+    dropItem(player);
+    /**@type {Number} */
+    let roleIndex = player.getDynamicProperty("role");
+    let role = roleList[roleIndex];
+    setScore(player, "bomb", role.bomb.init);
+    setScore(player, "power", role.power.init);
+    setScore(player, "speed", role.speed.init);
+    player.removeTag("kick");
+    player.removeTag("punch");
+    player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
+    if(getScore("残り時間", "display") <= 60 || mc.world.getDynamicProperty("misobon") === false) {
+      player.teleport(roby);
+      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
+    }
+    else {
+      /**@type {Number} */
+      let stageIndex = mc.world.getDynamicProperty("stage");
+      player.teleport(stage[stageIndex].spectator);
+      let slot = player.getComponent(mc.EntityInventoryComponent.componentId).container.getSlot(0);
+      slot.setItem(new mc.ItemStack("altivelis:shot"));
+      slot.getItem().lockMode = mc.ItemLockMode.slot;
+      player.selectedSlotIndex = 0;
+    }
   }
 }
