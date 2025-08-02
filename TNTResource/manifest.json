@@ -3,7 +3,7 @@
   "header": {
     "name": "TNTRoyalResource",
     "description": "TNTRoyalのリソースパック",
-    "version": [1, 0, 11],
+    "version": [1, 0, 12],
     "min_engine_version": [1, 21, 50],
     "uuid": "40f9cea2-d2ca-4004-90a0-3bcfe58b8636"
   },
