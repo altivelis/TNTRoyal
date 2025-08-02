@@ -497,6 +497,7 @@ mc.system.runInterval(()=>{
       players.forEach(player=>{
         if(!player.hasTag("dead")) {
           player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
+          player.dimension.spawnParticle("minecraft:bleach", {...player.location, y: player.location.y+2});
           lib.myTimeout(20, ()=>{
             player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, true);
           })
@@ -837,6 +838,7 @@ export function startGame(){
                 player.playSound("mob.wither.spawn", {location: player.location, volume: 10});
               })
               member.forEach(player=>{
+                if(!player.isValid) return;
                 player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, true);
               })
             })
