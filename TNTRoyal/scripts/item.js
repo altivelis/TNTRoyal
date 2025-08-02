@@ -7,6 +7,7 @@ import * as mc from "@minecraft/server";
 import * as lib from "./lib";
 import {stage} from "./const";
 import { onUseSpider } from "./skills/spider";
+import { onUseEnderman } from "./skills/enderman";
 
 mc.system.beforeEvents.startup.subscribe(ev=>{
   // パンチアイテムの使用時処理
@@ -120,6 +121,10 @@ mc.system.beforeEvents.startup.subscribe(ev=>{
         case "altivelis:skill_spider":
           onUseSpider(data);
           break;
+        case "altivelis:skill_enderman":
+          onUseEnderman(data);
+          break;
+        // 他のスキルの処理をここに追加
       }
     }
   })

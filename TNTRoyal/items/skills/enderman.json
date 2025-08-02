@@ -1,0 +1,32 @@
+{  
+  "format_version": "1.21.30",  
+  "minecraft:item": {  
+    "description": {  
+      "identifier": "altivelis:skill_enderman",  
+      "menu_category": {
+        "category": "equipment"
+      }  
+    },  
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": {
+        "textures": {
+          "default": "ender_pearl"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "スキル：エンダーマン"
+      },
+      "minecraft:cooldown": {
+        "category": "enderman",
+        "duration": 30.0
+      },
+      "minecraft:glint": true,
+      "minecraft:interact_button" : "使用する",
+      "minecraft:rarity": "epic",
+      "minecraft:custom_components": [
+        "tntr:skill"
+      ]
+    }
+  }
+}

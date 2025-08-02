@@ -114,5 +114,17 @@ export const roleList = [
     icon: "textures/altivelis/spider.png",
     particle: "altivelis:spider_face_particle",
     description: "特殊能力：クモの巣  CT：10秒\nクモの巣を設置し、踏んだ相手の動きを止めることができる。"
+  },
+  {
+    name: "エンダーマン",
+    bomb: {init: 1, max: 2},
+    power: {init: 2, max: 4},
+    speed: {init: 0, max: 4},
+    blue: {init: false, able: true},
+    kick: {init: false, able: false},
+    punch: {init: false, able: true},
+    icon: "textures/altivelis/enderman.png",
+    particle: "altivelis:enderman_face_particle",
+    description: "特殊能力：テレポート  CT：30秒\n前方8m以内の敵の場所にテレポートする。"
   }
 ]
