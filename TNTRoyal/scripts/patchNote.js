@@ -28,8 +28,15 @@ const patchNoteTexts = [
           "・「パンチ」アイテムの持ち方を斧と同じように変更しました。\n" +
           "・ステージ名を日本語表記に変更しました。\n" +
           "・パッチノートを表示するボタンを追加しました。"
+  },
+  {
+    version: "1.0.4",
+    text: "・新ステージ「要塞」を追加しました。\n" +
+          "・新能力「エンダーマン」を追加しました。\n" +
+          "・プレイヤーがワールドを抜けた際に発生する可能性のあった不具合を修正しました。\n" +
+          "・パッチノートのボタンの順番が特定条件下において逆転してしまう不具合を修正しました。"
   }
-]
+].reverse(); // 最新のパッチノートが一番上に来るようにする
 
 /**
  * パッチノートを開く
@@ -38,7 +45,7 @@ const patchNoteTexts = [
 export function openPatchNoteForm(player) {
   const form1 = new ui.ActionFormData()
     .title("§l§eパッチノート§r");
-  patchNoteTexts.reverse().forEach(note=>{
+  patchNoteTexts.forEach(note=>{
     form1.button(`§lv${note.version}`);
   });
 
