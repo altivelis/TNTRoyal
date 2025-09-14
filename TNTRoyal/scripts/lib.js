@@ -4,7 +4,7 @@
  */
 
 import * as mc from "@minecraft/server";
-import { breakable_block, roby, stage, through_block } from "./const.js";
+import { breakable_block, lobby, stage, through_block } from "./const.js";
 import { roleList } from "./role.js";
 
 /**
@@ -465,7 +465,7 @@ export function dropPlayer(player, reason, sound = "item.trident.thunder") {
     player.removeTag("punch");
     player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
     if(getScore("残り時間", "display") <= 60 || mc.world.getDynamicProperty("misobon") === false) {
-      player.teleport(roby);
+      player.teleport(lobby);
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
     }
     else {

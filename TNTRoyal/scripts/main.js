@@ -9,8 +9,9 @@ import "./menu.js";
 import "./button.js";
 import "./item.js";
 import { roleList } from "./role.js";
-import { breakable_block, roby, stage, through_block } from "./const.js";
+import { breakable_block, lobby, stage, through_block } from "./const.js";
 import { getSpiderWeb } from "./skills/spider.js";
+import "./commands/index.js";
 
 let tick = 0;
 let pressureTick = 0;
@@ -23,53 +24,6 @@ let pressure_rate = 5;
  * ゲーム開始時の参加人数
  */
 let initialPlayerCount = 0;
-
-//テスト用コマンド
-mc.system.afterEvents.scriptEventReceive.subscribe(data=>{
-  if(data.id == "tnt:init"){
-    mc.world.setDynamicProperty("stage", 0);
-    mc.world.setDynamicProperty("time", 180);
-  }
-  if(data.id == "tnt:reset"){
-    mc.world.getPlayers().forEach(player=>{
-      player.removeTag("player");
-      player.removeTag("dead");
-      player.removeTag("kick");
-      player.removeTag("punch");
-      player.removeTag("tp");
-      player.removeTag("spider_web");
-      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Camera, true);
-      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Jump, true);
-      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.Sneak, true);
-      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, true);
-      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, true);
-      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, true);
-      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, true);
-      player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, true);
-      player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
-      player.camera.clear();
-      player.teleport(roby, {rotation: {x:0, y:0}});
-      player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Reset, [mc.HudElement.Health, mc.HudElement.Hotbar, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
-      player.stopMusic();
-      let moveComp = player.getComponent(mc.EntityMovementComponent.componentId);
-      moveComp.resetToDefaultValue();
-    })
-    mc.world.getDimension("overworld").getEntities({excludeTypes:["minecraft:player"]}).forEach(entity=>{
-      entity.remove();
-    })
-    /** @type {Number};*/
-    let stageIndex = mc.world.getDynamicProperty("stage");
-    lib.clearField(mc.world.getDimension("overworld"), stage[stageIndex].area.start, stage[stageIndex].area.end);
-    mc.world.setDynamicProperty("status", 0);
-    mc.world.setDynamicProperty("stage", 0);
-  }
-  if(data.id == "tnt:test") {
-    mc.world.playMusic("record.precipice", {fade: 1, loop: true, volume: 100000});
-  }
-  if(data.id == "tnt:test2") {
-    mc.world.stopMusic();
-  }
-})
 
 mc.system.runInterval(()=>{
   const players = mc.world.getPlayers();
@@ -574,7 +528,7 @@ mc.system.runInterval(()=>{
         mc.world.getPlayers().forEach(player=>{
           player.onScreenDisplay.setTitle("§c残り1分", {fadeInDuration: 0, stayDuration: 20, fadeOutDuration: 10});
           if(player.hasTag("dead")) {
-            player.teleport(roby);
+            player.teleport(lobby);
             player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
             player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.LateralMovement, false);
           }
@@ -897,7 +851,7 @@ function endGame(){
       player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveRight, true);
       player.getComponent(mc.EntityInventoryComponent.componentId).container.clearAll();
       player.camera.clear();
-      player.teleport(roby, {rotation: {x:0, y:0}});
+      player.teleport(lobby, {rotation: {x:0, y:0}});
       player.onScreenDisplay.setHudVisibility(mc.HudVisibility.Reset, [mc.HudElement.Health, mc.HudElement.Hunger, mc.HudElement.ProgressBar]);
       let moveComp = player.getComponent(mc.EntityMovementComponent.componentId);
       moveComp.resetToDefaultValue();
@@ -1058,7 +1012,7 @@ mc.world.afterEvents.playerSpawn.subscribe(data=>{
   if(data.player.hasTag("punch")) data.player.removeTag("punch");
   if(data.player.hasTag("tp")) data.player.removeTag("tp");
   if(data.player.hasTag("revival")) data.player.removeTag("revival");
-  data.player.teleport(roby, {rotation: {x:0, y:0}});
+  data.player.teleport(lobby, {rotation: {x:0, y:0}});
   /** @type {Number} */
   let index = mc.world.getDynamicProperty("stage");
   if(mc.world.getDynamicProperty("status") > 0) {

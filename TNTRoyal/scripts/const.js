@@ -5,7 +5,7 @@
 
 import * as mc from "@minecraft/server";
 
-export const roby = {x:0.5, y:-58.5, z:0.5};
+export const lobby = {x:0.5, y:-58.5, z:0.5};
 
 /**
  * @typedef {Object} Stage
