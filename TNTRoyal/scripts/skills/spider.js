@@ -2,7 +2,7 @@ import * as mc from "@minecraft/server";
 import * as lib from "../lib";
 
 /**
- * 
+ * クモのスキルを使用したときの処理
  * @param {mc.ItemComponentUseEvent} data 
  */
 export function onUseSpider(data) {
