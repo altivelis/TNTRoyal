@@ -1,0 +1,32 @@
+{  
+  "format_version": "1.21.30",  
+  "minecraft:item": {  
+    "description": {  
+      "identifier": "altivelis:skill_blaze",  
+      "menu_category": {
+        "category": "equipment"
+      }  
+    },  
+    "components": {
+      "minecraft:max_stack_size": 1,
+      "minecraft:icon": {
+        "textures": {
+          "default": "blaze_rod"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "スキル：ブレイズ"
+      },
+      "minecraft:cooldown": {
+        "category": "blaze",
+        "duration": 10.0
+      },
+      "minecraft:glint": true,
+      "minecraft:interact_button" : "使用する",
+      "minecraft:rarity": "epic",
+      "minecraft:custom_components": [
+        "tntr:skill"
+      ]
+    }
+  }
+}

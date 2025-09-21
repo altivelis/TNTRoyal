@@ -126,5 +126,17 @@ export const roleList = [
     icon: "textures/altivelis/enderman.png",
     particle: "altivelis:enderman_face_particle",
     description: "特殊能力：テレポート  CT：30秒\n前方8m以内の敵の場所にテレポートする。"
+  },
+  {
+    name: "ブレイズ",
+    bomb: {init: 1, max: 2},
+    power: {init: 3, max: 5},
+    speed: {init: 0, max: 4},
+    blue: {init: false, able: false},
+    kick: {init: false, able: true},
+    punch: {init: false, able: false},
+    icon: "textures/altivelis/blaze.png",
+    particle: "altivelis:blaze_face_particle",
+    description: "特殊能力：フレイムシュート  CT：10秒\n前方8m以内のTNTを爆発させる。"
   }
 ]
