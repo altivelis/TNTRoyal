@@ -137,7 +137,7 @@ export const roleList = [
     punch: {init: false, able: false},
     icon: "textures/altivelis/blaze.png",
     particle: "altivelis:blaze_face_particle",
-    description: "特殊能力：フレイムシュート  CT：10秒\n前方8m以内のTNTを爆発させる。"
+    description: "特殊能力：フレイムシュート  CT：30秒\n前方8m以内のTNTを爆発させる。"
   },
   {
     name: "マグマキューブ",

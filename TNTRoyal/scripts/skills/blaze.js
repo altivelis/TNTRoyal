@@ -38,7 +38,7 @@ export function onUseBlaze(data) {
         data.source.dimension.spawnParticle("minecraft:mobflame_single", {...p, y: p.y + 1});
       })
       data.source.dimension.playSound("mob.blaze.shoot", pos, {volume: 10});
-      data.source.startItemCooldown("blaze", 200);
+      data.source.startItemCooldown("blaze", 600);
       return;
     }
   }

@@ -19,7 +19,7 @@
       },
       "minecraft:cooldown": {
         "category": "blaze",
-        "duration": 10.0
+        "duration": 30.0
       },
       "minecraft:glint": true,
       "minecraft:interact_button" : "使用する",
