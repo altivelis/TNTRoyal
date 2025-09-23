@@ -9,6 +9,7 @@ import {stage} from "./const";
 import { onUseSpider } from "./skills/spider";
 import { onUseEnderman } from "./skills/enderman";
 import { onUseBlaze } from "./skills/blaze";
+import { onUseMagmacube } from "./skills/magmacube";
 
 mc.system.beforeEvents.startup.subscribe(ev=>{
   // パンチアイテムの使用時処理
@@ -127,6 +128,9 @@ mc.system.beforeEvents.startup.subscribe(ev=>{
           break;
         case "altivelis:skill_blaze":
           onUseBlaze(data);
+          break;
+        case "altivelis:skill_magmacube":
+          onUseMagmacube(data);
           break;
         // 他のスキルの処理をここに追加
       }

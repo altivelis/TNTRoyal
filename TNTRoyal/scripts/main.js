@@ -985,14 +985,17 @@ mc.world.afterEvents.itemUse.subscribe(data=>{
 mc.world.afterEvents.playerButtonInput.subscribe(data=>{
   if(mc.world.getDynamicProperty("status") != 2) return;
   let player = data.player;
-  if(player.hasTag("dead")) return;
+  if(player.hasTag("dead") || player.hasTag("spectator")) return;
   if(player.dimension.getEntities({type:"altivelis:tnt"}).filter(e=>{return e?.owner.id == player.id}).length >= lib.getScore(player, "bomb")) return;
   if(player.dimension.getEntities({location: player.location, maxDistance:0.5, type:"altivelis:tnt"}).length > 0) return;
   let pos = player.location;
-  let tnt = player.dimension.spawnEntity("altivelis:tnt", {x: Math.floor(pos.x)+0.5, y: Math.floor(pos.y), z: Math.floor(pos.z)+0.5});
+  pos = {x: Math.floor(pos.x) + 0.5, y: Math.floor(pos.y), z: Math.floor(pos.z) + 0.5};
+  let tnt = player.dimension.spawnEntity("altivelis:tnt", pos);
   if(player.getDynamicProperty("tnt") == 1) {
     tnt.triggerEvent("blue");
     tnt.addTag("blue");
+  }else{
+    tnt.triggerEvent("default");
   }
   tnt.owner = player;
   tnt.setDynamicProperty("power", lib.getScore(player, "power"));

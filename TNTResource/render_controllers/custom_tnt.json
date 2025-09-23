@@ -6,7 +6,8 @@
         "textures": {
           "Array.tnt": [
             "Texture.default",
-            "Texture.blue"
+            "Texture.blue",
+            "Texture.orange"
           ]
         }
       },

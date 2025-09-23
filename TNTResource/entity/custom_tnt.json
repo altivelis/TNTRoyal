@@ -6,7 +6,8 @@
       "materials": { "default": "entity_alphatest" },
       "textures": {
         "default": "textures/altivelis/tnt_texture",
-        "blue": "textures/altivelis/blue_tnt_texture"
+        "blue": "textures/altivelis/blue_tnt_texture",
+        "orange": "textures/altivelis/orange_tnt_texture"
       },
       "geometry": {
         "default": "geometry.custom_tnt"

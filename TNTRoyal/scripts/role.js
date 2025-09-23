@@ -138,5 +138,17 @@ export const roleList = [
     icon: "textures/altivelis/blaze.png",
     particle: "altivelis:blaze_face_particle",
     description: "特殊能力：フレイムシュート  CT：10秒\n前方8m以内のTNTを爆発させる。"
+  },
+  {
+    name: "マグマキューブ",
+    bomb: {init: 1, max: 5},
+    power: {init: 2, max: 6},
+    speed: {init: 0, max: 3},
+    blue: {init: false, able: false},
+    kick: {init: false, able: false},
+    punch: {init: false, able: true},
+    icon: "textures/altivelis/magma_cube.png",
+    particle: "altivelis:magma_cube_face_particle",
+    description: "特殊TNT：チャージボム  \nアイテムを長押しした時間に応じて起爆時間が伸びるTNTを設置する。"
   }
 ]

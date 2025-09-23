@@ -17,13 +17,39 @@
         }
       },
       "default": {
+        "minecraft:explode": {
+          "fuse_length": 2.5,
+          "fuse_lit": true,
+          "power": 4,
+          "causes_fire": false,
+          "breaks_blocks": false
+        },
         "minecraft:variant": {
           "value": 0
         }
       },
       "blue": {
+        "minecraft:explode": {
+          "fuse_length": 2.5,
+          "fuse_lit": true,
+          "power": 4,
+          "causes_fire": false,
+          "breaks_blocks": false
+        },
         "minecraft:variant": {
           "value": 1
+        }
+      },
+      "orange": {
+        "minecraft:explode": {
+          "fuse_length": 10.0,
+          "fuse_lit": true,
+          "power": 4,
+          "causes_fire": false,
+          "breaks_blocks": false
+        },
+        "minecraft:variant": {
+          "value": 2
         }
       }
     },
@@ -34,13 +60,6 @@
       },
       "minecraft:type_family": {
         "family": [ "mob" ]
-      },
-      "minecraft:explode": {
-        "fuse_length": 2.5,
-        "fuse_lit": true,
-        "power": 4,
-        "causes_fire": false,
-        "breaks_blocks": false
       },
       "minecraft:physics": {
         "has_gravity": true
@@ -81,6 +100,13 @@
         "add": {
           "component_groups": [
             "blue"
+          ]
+        }
+      },
+      "orange": {
+        "add": {
+          "component_groups": [
+            "orange"
           ]
         }
       }

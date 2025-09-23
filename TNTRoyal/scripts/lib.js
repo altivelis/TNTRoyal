@@ -442,6 +442,11 @@ export function initPlayer(player) {
     item.lockMode = mc.ItemLockMode.inventory;
     player.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
   }
+  if(role.name == "マグマキューブ") {
+    let item = new mc.ItemStack("altivelis:skill_magmacube", 1);
+    item.lockMode = mc.ItemLockMode.inventory;
+    player.getComponent(mc.EntityInventoryComponent.componentId).container.addItem(item);
+  }
   player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveForward, true);
   player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveBackward, true);
   player.inputPermissions.setPermissionCategory(mc.InputPermissionCategory.MoveLeft, true);
