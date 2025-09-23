@@ -22,7 +22,6 @@
         "movement_modifier": 1.0
       },
       "minecraft:glint": true,
-      "minecraft:interact_button" : "使用する",
       "minecraft:rarity": "epic",
       "minecraft:custom_components": [
         "tntr:skill"
