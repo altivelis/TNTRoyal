@@ -976,6 +976,8 @@ mc.world.afterEvents.itemUse.subscribe(data=>{
   if(source.getDynamicProperty("tnt") == 1) {
     tnt.triggerEvent("blue");
     tnt.addTag("blue");
+  }else{
+    tnt.triggerEvent("default");
   }
   tnt.owner = source;
   tnt.setDynamicProperty("power", lib.getScore(source, "power"));

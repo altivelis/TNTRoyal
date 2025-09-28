@@ -113,6 +113,7 @@ mc.system.beforeEvents.startup.subscribe(ev=>{
         tnt.setDynamicProperty("power", 2);
         tnt.addTag("revival");
         tnt.owner = data.source;
+        tnt.triggerEvent("default");
       }
     }
   })
