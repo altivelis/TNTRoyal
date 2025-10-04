@@ -1,0 +1,9 @@
+{
+  "namespace": "scoreboard",
+
+  "scoreboard_sidebar": {
+    "anchor_from": "right_middle",
+    "anchor_to": "bottom_right",
+    "offset": [ 0, 0 ]
+  }
+}
